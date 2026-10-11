@@ -1,0 +1,19 @@
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.0
+pydantic-settings==2.15.0
+langgraph==1.2.14
+langgraph-checkpoint==4.2.0
+langgraph-checkpoint-postgres==3.1.2
+psycopg[binary]==3.3.6
+psycopg-pool==3.3.3
+google-genai==2.29.0
+httpx==0.28.1
+reportlab==5.0.1
+PyJWT[crypto]==2.15.1
+python-multipart==0.0.32
+
+# dev / test
+pytest==9.1.1
+pytest-asyncio==1.4.0
+ruff==0.17.0
