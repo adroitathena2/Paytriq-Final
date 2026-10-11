@@ -19,6 +19,7 @@ from app.core.trace import trace as tracer
 from app.graph.build import build_checkpointer, build_graph
 from app.graph.deps import Deps
 from app.graph.runner import RunManager
+from app.tools.pdf import PdfTool
 from app.tools.places import PlacesTool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -30,7 +31,7 @@ def build_deps(settings: Settings, db) -> Deps:
     storage = Storage(settings)
     return Deps(
         llm=build_llm(settings), db=db, tracer=tracer, settings=settings, storage=storage,
-        places=PlacesTool(settings.google_maps_api_key, settings.overpass_url),
+        places=PlacesTool(settings.google_maps_api_key, settings.overpass_url), pdf=PdfTool(storage),
     )
 
 
