@@ -56,6 +56,7 @@ def test_run_lifecycle_and_trace_export(client):
     run = client.post(f"/events/{event['id']}/runs").json()
     body = wait_until_settled(client, run["id"])
     assert body["run"]["status"] == "idle"
+    assert client.get("/runs").json()[0]["event_name"] == "TechFest 2026"
     assert body["values"]["event"]["name"] == "TechFest 2026"
 
     trace = client.get(f"/runs/{run['id']}/trace").json()

@@ -13,6 +13,12 @@ from app.graph.messages import new_message
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
+@router.get("")
+async def list_runs(user: User = Depends(current_user), services: Services = Depends(get_services)):
+    runs = await services.db.list_owner_runs(user.id)
+    return [{**r, "status": effective_status(services, r)} for r in runs]
+
+
 @router.get("/{run_id}")
 async def get_run(run_id: str, user: User = Depends(current_user), services: Services = Depends(get_services)):
     run = await owned_run(services, run_id, user)

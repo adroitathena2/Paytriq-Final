@@ -26,6 +26,7 @@ class Database(Protocol):
     async def create_run(self, event_id: str, owner_id: str) -> dict: ...
     async def get_run(self, run_id: str) -> dict | None: ...
     async def list_runs(self, event_id: str) -> list[dict]: ...
+    async def list_owner_runs(self, owner_id: str) -> list[dict]: ...
     async def update_run(self, run_id: str, **fields: Any) -> None: ...
     async def add_trace(self, run_id: str, agent: str, event_type: str, payload: dict) -> None: ...
     async def list_trace(self, run_id: str) -> list[dict]: ...
@@ -68,6 +69,11 @@ class MemoryDB:
     async def list_runs(self, event_id: str) -> list[dict]:
         rows = [r for r in self.runs.values() if r["event_id"] == event_id]
         return sorted(rows, key=lambda r: r["created_at"], reverse=True)
+
+    async def list_owner_runs(self, owner_id: str) -> list[dict]:
+        rows = [{**r, "event_name": self.events.get(r["event_id"], {}).get("name")}
+                for r in self.runs.values() if r["owner_id"] == owner_id]
+        return sorted(rows, key=lambda r: r["created_at"], reverse=True)[:50]
 
     async def update_run(self, run_id: str, **fields: Any) -> None:
         self.runs[run_id].update({k: v for k, v in fields.items() if k in RUN_FIELDS}, updated_at=_now())
@@ -150,6 +156,12 @@ class PostgresDB:
 
     async def list_runs(self, event_id: str) -> list[dict]:
         rows = await self._fetch("select * from runs where event_id = %s order by created_at desc", (event_id,))
+        return [_jsonable(r) for r in rows]
+
+    async def list_owner_runs(self, owner_id: str) -> list[dict]:
+        rows = await self._fetch(
+            "select r.*, e.name as event_name from runs r join events e on e.id = r.event_id "
+            "where r.owner_id = %s order by r.created_at desc limit 50", (owner_id,))
         return [_jsonable(r) for r in rows]
 
     async def update_run(self, run_id: str, **fields: Any) -> None:
