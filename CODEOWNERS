@@ -1,0 +1,13 @@
+# CODEOWNERS — who reviews what.
+#
+# TODO(team): replace the placeholders below with the 4 real GitHub usernames
+# (one per member, including examstudiobot) before the final submission.
+# GitHub only notifies real usernames; placeholder handles are ignored.
+# Example:
+#   * @examstudiobot @member2 @member3 @member4
+* @examstudiobot
+/docs/ @examstudiobot
+/decision/ @examstudiobot
+/graph/ @examstudiobot
+/api/ @examstudiobot
+/frontend/ @examstudiobot
