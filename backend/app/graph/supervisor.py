@@ -119,6 +119,7 @@ def fallback_route(state: EventState) -> RouteDecision:
         "send_review": ("human_approval", "send"),
         "sending": ("outreach", None),
         "replies": ("outreach", None),
+        "replacement": ("discovery", None),
         "roi": ("roi_audit", None),
         "roi_review": ("human_approval", "roi_publish"),
     }

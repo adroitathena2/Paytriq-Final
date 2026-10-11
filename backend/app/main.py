@@ -19,6 +19,7 @@ from app.core.trace import trace as tracer
 from app.graph.build import build_checkpointer, build_graph
 from app.graph.deps import Deps
 from app.graph.runner import RunManager
+from app.tools.gmail import GmailTool
 from app.tools.pdf import PdfTool
 from app.tools.places import PlacesTool
 
@@ -32,6 +33,7 @@ def build_deps(settings: Settings, db) -> Deps:
     return Deps(
         llm=build_llm(settings), db=db, tracer=tracer, settings=settings, storage=storage,
         places=PlacesTool(settings.google_maps_api_key, settings.overpass_url), pdf=PdfTool(storage),
+        gmail=GmailTool(settings),
     )
 
 
