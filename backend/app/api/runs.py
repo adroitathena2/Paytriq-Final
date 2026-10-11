@@ -12,6 +12,9 @@ from app.graph.messages import new_message
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
+# Phases where "continue" should retry the failed step instead of just re-routing.
+RETRY_PHASES = {"discovery_failed": "discovery"}
+
 
 @router.get("")
 async def list_runs(user: User = Depends(current_user), services: Services = Depends(get_services)):
@@ -33,7 +36,8 @@ async def continue_run(run_id: str, user: User = Depends(current_user), services
     ensure_idle(services, run)
     if run["status"] == "completed":
         raise HTTPException(409, "This run is already complete.")
-    services.runner.trigger(run_id, {}, "continue")
+    retry = RETRY_PHASES.get(run["phase"])
+    services.runner.trigger(run_id, {"phase": retry} if retry else {}, "continue")
     return {"status": "running"}
 
 
