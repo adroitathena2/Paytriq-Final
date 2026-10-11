@@ -18,6 +18,7 @@ backend/.local_storage/
 
 # Node
 node_modules/
+node_modules_old/
 dist/
 *.tsbuildinfo
 .vercel/
