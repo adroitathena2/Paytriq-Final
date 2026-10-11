@@ -224,8 +224,10 @@ async def _discover(state: EventState, deps, feedback: str, request_ids: list[st
     summary = {"found": len(brands), "good_fit": len(ws.good()), "searches": ws.searches,
                "in_reply_to": request_ids}
     if not brands:
-        messages.append(await emit(deps, AGENT, "human", "escalation", {**summary, "errors": errors[-3:]},
-                                   "No businesses could be found; the map services may be down. Please retry later."))
+        llm_down = any(e.get("tool") == "llm" for e in errors[-3:])
+        reason = ("The language model is unavailable, so discovery could not run. Check GEMINI_API_KEY or retry later."
+                  if llm_down else "No businesses could be found; the map services may be down. Please retry later.")
+        messages.append(await emit(deps, AGENT, "human", "escalation", {**summary, "errors": errors[-3:]}, reason))
         return {"messages": messages, "errors": errors, "phase": "discovery_failed"}
     messages.append(await emit(deps, AGENT, "supervisor", "result", summary,
                                f"Ranked {len(brands)} brands; {len(ws.good())} are a good fit."))

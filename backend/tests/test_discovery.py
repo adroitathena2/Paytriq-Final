@@ -79,6 +79,15 @@ async def test_total_failure_escalates_instead_of_crashing(make_deps):
     assert update["phase"] == "discovery_failed"
     escalation = update["messages"][-1]
     assert (escalation.type, escalation.to_agent) == ("escalation", "human")
+    assert "map services" in escalation.reasoning
+
+
+async def test_llm_outage_is_named_as_the_cause(make_deps):
+    deps = make_deps(FakeLLM(decide={"discovery.plan": LLMError("GEMINI_API_KEY is not set")}),
+                     places=FakePlaces(lambda r, c: []))
+    update = await discovery.run(state(), deps)
+    assert update["phase"] == "discovery_failed"
+    assert "language model is unavailable" in update["messages"][-1].reasoning
 
 
 async def test_organizer_feedback_reaches_the_scoring_prompt(make_deps):
