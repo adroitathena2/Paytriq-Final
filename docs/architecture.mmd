@@ -1,0 +1,38 @@
+flowchart LR
+  subgraph UI["Frontend (React, Vercel)"]
+    O["Organizer"]
+  end
+
+  subgraph API["FastAPI (Render)"]
+    R["Run manager<br/>(background tasks)"]
+  end
+
+  subgraph G["LangGraph StateGraph (one thread per run)"]
+    S{{"Supervisor<br/>LLM router + guardrails"}}
+    BB[("EventState blackboard<br/>messages bus, brands,<br/>proposals, threads, report")]
+    D["Discovery & Ranking"]
+    P["Proposal"]
+    OU["Outreach"]
+    RA["ROI Audit"]
+    H["human_approval<br/>interrupt()"]
+  end
+
+  O -- "create event, approve gates,<br/>poll replies, upload evidence" --> R
+  R -- "invoke / resume" --> S
+  S -- "next = ..." --> D & P & OU & RA & H
+  D & P & OU & RA & H -- "result / messages" --> S
+  D & P & OU & RA <-. "read state, post AgentMessages" .-> BB
+  S <-. "reads open requests, errors" .-> BB
+
+  OU -- "L2 revision_request (critique)<br/>L3 revision_request (pushback)" --> P
+  OU -- "L4 request: replacement" --> D
+  D -- "L1 replan (self)" --> D
+  RA -- "L5 escalation: missing evidence" --> O
+  P -- "result: v2/v3 ready" --> OU
+
+  D -- "Places API / Overpass" --> X1[("Google Places<br/>OpenStreetMap")]
+  P -- "ReportLab PDF" --> X2[("Supabase Storage")]
+  OU -- "send, read threads" --> X3[("Gmail API")]
+  RA -- "photos + links" --> X4[("Gemini Vision")]
+  D & P & OU & RA & S -- "function calling,<br/>structured output" --> X5[("Gemini Flash")]
+  G -- "checkpoints" --> X6[("Supabase Postgres<br/>checkpoints + agent_trace")]
