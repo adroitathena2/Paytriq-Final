@@ -75,6 +75,28 @@ def test_approve_requires_a_pending_gate(client):
     assert resp.status_code == 409
 
 
+def test_evidence_upload_validation_and_audit_trigger(client):
+    event = client.post("/events", json=EVENT).json()
+    run = client.post(f"/events/{event['id']}/runs").json()
+    wait_until_settled(client, run["id"])
+    url = f"/runs/{run['id']}/evidence"
+
+    assert client.post(url, data={"brand_id": "b1"}).status_code == 422  # neither photo nor link
+    bad_type = client.post(url, data={"brand_id": "b1"}, files={"file": ("x.gif", b"GIF89a", "image/gif")})
+    assert bad_type.status_code == 415
+    assert client.post(url, data={"brand_id": "b1", "link": "ftp://x"}).status_code == 422
+
+    photo = client.post(url, data={"brand_id": "b1", "note": "stall"},
+                        files={"file": ("s.jpg", b"\xff\xd8x", "image/jpeg")})
+    link = client.post(url, data={"brand_id": "b1", "link": "https://instagram.com/p/abc"})
+    assert photo.status_code == link.status_code == 201
+    assert [e["kind"] for e in client.get(url).json()] == ["photo", "link"]
+
+    assert client.get(f"/runs/{run['id']}/report").status_code == 404
+    audit = client.post(f"/runs/{run['id']}/audit")
+    assert audit.status_code == 202 and audit.json()["evidence_items"] == 2
+
+
 def test_unknown_ids_are_404(client):
     assert client.get("/runs/does-not-exist").status_code == 404
     assert client.post("/events/nope/runs").status_code == 404

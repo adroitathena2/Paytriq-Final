@@ -245,3 +245,41 @@ class FakeGmail:
 
     async def get_thread(self, thread_id: str) -> list[dict]:
         return list(self.threads.get(thread_id, []))
+
+
+# --- ROI audit -----------------------------------------------------------------------------------
+
+def roi_plan(ctx: dict) -> dict:
+    """List, verify each sponsor, ask for evidence when something is unclear, compile, finish."""
+    used = tools_used(ctx)
+    if "list_deliverables" not in used:
+        return call("list_deliverables", reasoning="see what was promised")
+    verified = {o["args"]["brand_id"] for o in ctx["observations"] if o["tool"] == "verify_brand"}
+    for brand_id in ctx["sponsors"]:
+        if brand_id not in verified:
+            return call("verify_brand", brand_id=brand_id, reasoning="check this sponsor's evidence")
+    results = [r for o in ctx["observations"] if o["tool"] == "verify_brand" for r in o["result"]["results"]]
+    unclear = [r.split(":")[0] for r in results if ": missing" in r or ": ambiguous" in r]
+    if unclear and "request_evidence" not in used:
+        return call("request_evidence", requests=[f"Please upload a clear photo of: {u}" for u in unclear],
+                    reasoning="do not guess; ask for evidence")
+    if "compile_report" not in used:
+        return call("compile_report", summary=f"{len(results) - len(unclear)} of {len(results)} deliverables verified.",
+                    reasoning="all sponsors checked")
+    return call("finish", summary="report compiled")
+
+
+def vision_by_note(ctx: dict) -> dict:
+    """A photo note starting with 'clear:' verifies the deliverable it names; 'blurry:' makes it ambiguous."""
+    checks = []
+    for d in ctx["deliverables"]:
+        photo = next((p for p in ctx["photos_in_order"] if d.lower() in (p["note"] or "").lower()), None)
+        if photo is None:
+            checks.append({"deliverable": d, "status": "missing", "confidence": 0.9, "explanation": "not shown"})
+        elif "blurry" in photo["note"]:
+            checks.append({"deliverable": d, "status": "ambiguous", "confidence": 0.4,
+                           "explanation": "logo not readable", "evidence_ids": [photo["evidence_id"]]})
+        else:
+            checks.append({"deliverable": d, "status": "verified", "confidence": 0.95,
+                           "explanation": "clearly visible", "evidence_ids": [photo["evidence_id"]]})
+    return {"checks": checks}
