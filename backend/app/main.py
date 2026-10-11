@@ -22,6 +22,7 @@ from app.graph.runner import RunManager
 from app.tools.gmail import GmailTool
 from app.tools.pdf import PdfTool
 from app.tools.places import PlacesTool
+from app.tools.vision import VisionTool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("paytriq")
@@ -30,8 +31,9 @@ log = logging.getLogger("paytriq")
 def build_deps(settings: Settings, db) -> Deps:
     tracer.bind(db)
     storage = Storage(settings)
+    llm = build_llm(settings)
     return Deps(
-        llm=build_llm(settings), db=db, tracer=tracer, settings=settings, storage=storage,
+        llm=llm, db=db, tracer=tracer, settings=settings, storage=storage, vision=VisionTool(llm, storage),
         places=PlacesTool(settings.google_maps_api_key, settings.overpass_url), pdf=PdfTool(storage),
         gmail=GmailTool(settings),
     )
