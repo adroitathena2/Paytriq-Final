@@ -19,6 +19,7 @@ from app.core.trace import trace as tracer
 from app.graph.build import build_checkpointer, build_graph
 from app.graph.deps import Deps
 from app.graph.runner import RunManager
+from app.tools.places import PlacesTool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("paytriq")
@@ -27,7 +28,10 @@ log = logging.getLogger("paytriq")
 def build_deps(settings: Settings, db) -> Deps:
     tracer.bind(db)
     storage = Storage(settings)
-    return Deps(llm=build_llm(settings), db=db, tracer=tracer, settings=settings, storage=storage)
+    return Deps(
+        llm=build_llm(settings), db=db, tracer=tracer, settings=settings, storage=storage,
+        places=PlacesTool(settings.google_maps_api_key, settings.overpass_url),
+    )
 
 
 @asynccontextmanager
