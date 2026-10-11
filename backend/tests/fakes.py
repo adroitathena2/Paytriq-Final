@@ -131,3 +131,117 @@ class FakePdf:
     async def render_and_store(self, run_id, event, brand, proposal) -> str:
         self.rendered.append((brand.id, proposal.version))
         return f"https://files.test/{brand.id}-v{proposal.version}.pdf"
+
+
+# --- Outreach ------------------------------------------------------------------------------------
+
+def _last_result(ctx: dict, tool: str) -> dict | None:
+    return next((o["result"] for o in reversed(ctx.get("observations", [])) if o["tool"] == tool), None)
+
+
+def outreach_plan(ctx: dict) -> dict:
+    """Critique -> revise/prepare; send if approved; poll -> classify -> act per label."""
+    used = tools_used(ctx)
+    if ctx["drafts_to_review"]:
+        if "critique_proposals" not in used:
+            return call("critique_proposals", brand_ids=ctx["drafts_to_review"], reasoning="review before sending")
+        verdicts = _last_result(ctx, "critique_proposals")["verdicts"]
+        requested = {o["args"]["brand_id"] for o in ctx["observations"] if o["tool"] == "request_revision"}
+        for brand_id, v in verdicts.items():
+            if v["verdict"] == "revise" and v["revisions_left"] > 0 and brand_id not in requested:
+                return call("request_revision", brand_id=brand_id, constraint="Gold is too pricey for a cafe",
+                            max_price_inr=20000, reasoning="price too high for brand size")
+        ok = [b for b, v in verdicts.items() if v["verdict"] == "ok" or v["revisions_left"] == 0]
+        if ok and "prepare_emails" not in used:
+            return call("prepare_emails", brand_ids=ok, reasoning="these are good to go")
+    if ctx["send_gate_approved"] and "send_approved" not in used:
+        return call("send_approved", reasoning="organizer approved")
+    if ctx["polling_requested"]:
+        if "poll_replies" not in used:
+            return call("poll_replies", reasoning="check inbox")
+        polled = _last_result(ctx, "poll_replies")
+        if polled["new_replies"] and "classify_replies" not in used:
+            return call("classify_replies", reasoning="understand the replies")
+        done = {(o["tool"], o["args"].get("brand_id")) for o in ctx["observations"]}
+        classified = (_last_result(ctx, "classify_replies") or {}).get("classified", {})
+        for brand_id, c in classified.items():
+            action = {"pushback_price": "route_pushback", "pushback_deliverables": "route_pushback",
+                      "declined": "request_replacement", "accepted": "mark_accepted"}.get(c["label"])
+            if action and (action, brand_id) not in done:
+                extra = {"why": c["summary"]} if action == "request_replacement" else {}
+                return call(action, brand_id=brand_id, reasoning=c["summary"], **extra)
+        for brand_id, text in polled["new_replies"].items():
+            if text.startswith("BOUNCED") and ("request_replacement", brand_id) not in done:
+                return call("request_replacement", brand_id=brand_id, why="email bounced", reasoning="bounced")
+        for brand_id in polled["silent_threads"]:
+            if ("draft_nudge", brand_id) not in done:
+                return call("draft_nudge", brand_id=brand_id, body="Just following up on our proposal.",
+                            reasoning="no reply for days")
+    return call("finish", summary="outreach handled")
+
+
+def critique(ctx: dict) -> dict:
+    """Asks for a revision when Gold costs more than Rs 20k and a revision is still allowed."""
+    out = []
+    for item in ctx["items"]:
+        gold = max(t["price_inr"] for t in item["proposal"]["tiers"])
+        revise = gold > 20000 and item["revisions_left"] > 0
+        out.append({"brand_id": item["brand"]["id"], "verdict": "revise" if revise else "ok",
+                    "issues": ["Gold price is high for a small cafe"] if revise else [],
+                    "email_subject": f"Sponsor {ctx['event']['name']}",
+                    "email_body": f"Hi {item['brand']['name']}, please see the attached proposal."})
+    return {"critiques": out}
+
+
+def classify(ctx: dict) -> dict:
+    out = []
+    for r in ctx["replies"]:
+        text = r["reply"].lower()
+        if "expensive" in text or "budget" in text:
+            out.append({"brand_id": r["brand_id"], "label": "pushback_price", "summary": "price too high",
+                        "constraint": "Keep every tier under Rs 15,000", "max_price_inr": 15000})
+        elif "not interested" in text:
+            out.append({"brand_id": r["brand_id"], "label": "declined", "summary": "not interested this year"})
+        elif "go with" in text:
+            tier = next(t for t in ("Gold", "Silver", "Bronze") if t.lower() in text)
+            out.append({"brand_id": r["brand_id"], "label": "accepted", "summary": f"accepted {tier}",
+                        "accepted_tier": tier})
+        else:
+            out.append({"brand_id": r["brand_id"], "label": "unrelated", "summary": "unclear"})
+    return {"replies": out}
+
+
+class FakeGmail:
+    """Records sends; serves scripted inbound messages per thread. Uses the real demo-recipient logic."""
+
+    SENDER = "paytriq.demo@test"
+
+    def __init__(self, settings, fail_send: bool = False) -> None:
+        from app.tools.gmail import GmailTool
+
+        self.real = GmailTool(settings)
+        self.fail_send = fail_send
+        self.sent: list[dict] = []
+        self.threads: dict[str, list[dict]] = {}
+
+    def recipient_for(self, contact_email, index):
+        return self.real.recipient_for(contact_email, index)
+
+    def is_own(self, address: str) -> bool:
+        return address == self.SENDER
+
+    async def send(self, to, subject, body, attachment=None, thread_id=None, in_reply_to=None) -> dict:
+        if self.fail_send:
+            raise RuntimeError("Gmail token refresh failed (400): invalid_grant")
+        thread_id = thread_id or f"thread-{len(self.sent) + 1}"
+        self.sent.append({"to": to, "subject": subject, "body": body, "attachment": attachment,
+                          "thread_id": thread_id, "in_reply_to": in_reply_to})
+        return {"message_id": f"m-{len(self.sent)}", "thread_id": thread_id}
+
+    def reply(self, thread_id: str, text: str, sender: str = "owner@brand.in", bounce: bool = False) -> None:
+        msgs = self.threads.setdefault(thread_id, [])
+        msgs.append({"id": f"r-{thread_id}-{len(msgs)}", "from": sender, "subject": "Re", "text": text,
+                     "message_id_header": f"<r{len(msgs)}@mail>", "date_ms": 0, "is_bounce": bounce})
+
+    async def get_thread(self, thread_id: str) -> list[dict]:
+        return list(self.threads.get(thread_id, []))
