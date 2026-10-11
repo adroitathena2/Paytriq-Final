@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     demo_mode: bool = True
     demo_recipients: str = ""  # comma separated
     nudge_after_days: float = 3.0
+    tool_retry_backoff_s: float = 1.5
 
     # Web
     cors_origins: str = "http://localhost:5173"

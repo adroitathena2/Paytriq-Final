@@ -17,13 +17,14 @@ class ToolInputError(ToolError):
 
 async def call_tool(
     deps, agent: str, name: str, fn: Callable[..., Awaitable[dict]], args: dict,
-    timeout: float = 90.0, retries: int = 1, backoff: float = 1.5,
+    timeout: float = 90.0, retries: int = 1, backoff: float | None = None,
 ) -> dict:
     """Run ``fn(**args)`` and always return a dict: ``{"ok": True, ...result}`` or ``{"ok": False, "error": ...}``.
 
     Failures are written to the trace; the calling agent decides how to adapt.
     """
     last_error = ""
+    backoff = deps.settings.tool_retry_backoff_s if backoff is None else backoff
     for attempt in range(retries + 1):
         try:
             result = await asyncio.wait_for(fn(**args), timeout=timeout)

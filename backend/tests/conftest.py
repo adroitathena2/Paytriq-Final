@@ -13,7 +13,7 @@ def settings(tmp_path) -> Settings:
     return Settings(
         _env_file=None, auth_disabled=True, demo_mode=True, demo_recipients="team1@example.com,team2@example.com",
         gemini_api_key="", database_url="", supabase_url="", supabase_service_role_key="",
-        google_maps_api_key="", gmail_refresh_token="", public_api_url="http://testserver",
+        google_maps_api_key="", gmail_refresh_token="", public_api_url="http://testserver", tool_retry_backoff_s=0,
     )
 
 
