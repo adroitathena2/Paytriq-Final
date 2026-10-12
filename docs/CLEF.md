@@ -161,3 +161,21 @@ Two transports speak the identical System One protocol (`decision/clef.py:48-57`
    Render with two env vars. The `clef → gemini → rules` chain keeps both
    honest: blank credentials produce a *less capable but truthful* run, never a
    fake one.
+
+## Appendix: local llama-server quickstart
+
+Recommended demo path is local `llama-server` on `:18781` (plain HTTP, no auth,
+no cost). Do not use Ollama's `clef-flash` on Windows (`:11434` gives
+non-finite logits, see `ollama/ollama#18769`); `decision/clef.py`
+rewrites a loopback `:11434` to `:18781` with a warning.
+
+```powershell
+llama-server.exe -m Clef-Flash-Q4_K_M.gguf --port 18781
+curl -s http://localhost:18781/v1/systemone -H "Content-Type: application/json" -d "{\"state\": \"{\\\"probe\\\": \\\"liveness\\\"}\", \"questions\": {\"q_probe\": {\"type\": \"noul\", \"instructions\": \"Is this a probe?\"}}}"
+```
+
+Expect `{"answers": {"q_probe": {"type": "noul", "noul": 0.xx}}, "usage": {...}}`.
+If the response has no `answers` key, `decision/base.py:require_answers` raises
+`DecisionFailed` naming `/v1/systemone` -- never fall back to
+`/v1/chat/completions` prose or `logprobs`. See `CLEF_BASE_URL` /
+`CLEF_BACKEND=ollama` in `.env.example` and `core/config.py`.
