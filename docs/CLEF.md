@@ -179,3 +179,21 @@ If the response has no `answers` key, `decision/base.py:require_answers` raises
 `DecisionFailed` naming `/v1/systemone` -- never fall back to
 `/v1/chat/completions` prose or `logprobs`. See `CLEF_BASE_URL` /
 `CLEF_BACKEND=ollama` in `.env.example` and `core/config.py`.
+
+## Appendix: viva defense notes
+
+Answer these verbatim in viva; each maps to one code guard:
+
+1. Why a decision model, not a chat LLM? Closed `noul`/`choice`/`score` returns a
+   label plus calibrated probability (`decision/clef.py:build_body`); chat prose
+   must be parsed back and has no calibration.
+2. Which endpoint? `POST /v1/systemone` with `{"state", "questions"}` in and
+   `{"answers", "usage"}` out. Never `/v1/chat/completions`.
+3. Why no logprobs? Chat logprobs measure next-token uncertainty, not decision
+   calibration; `decision/base.py:require_answers` rejects any payload without
+   `answers` instead of inventing a distribution.
+4. Which local server? `llama-server` on `:18781`, not Ollama `:11434`
+   (`ollama/ollama#18769`); stale `:11434` is rewritten with a warning.
+5. Fallback order? `clef -> gemini -> rules` (`decision/registry.py:CHAIN_ORDER`),
+   confidence-capped at `0.55` for rules; below `0.62` escalate, below `0.40` to a
+   human; substitutions set `degraded=True` under `raw["_degradation"]`.
