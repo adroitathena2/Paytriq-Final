@@ -85,7 +85,7 @@ def build_registry(settings: Settings | None = None, *,
     instances: dict[str, Tool] = {}
     for name, cls in sorted(TOOL_CLASSES.items()):
         try:
-            instances[name] = cls(settings=cfg)          # type: ignore[call-arg]
+            instances[name] = cls(settings=cfg)
         except TypeError as exc:
             raise RuntimeError(
                 f"tool {name!r} ({cls.__name__}) does not accept settings="

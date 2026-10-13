@@ -501,7 +501,7 @@ class OutreachAgent(ReActAgent):
         offer_entry, offer = found
         threads = self._threads_by_brand(ctx, notes)
         lead = self._lead_for(ctx, brand, notes)
-        thread_entry, thread = threads.get(brand, (None, None))  # type: ignore[assignment]
+        thread_entry, thread = threads.get(brand, (None, None))
         to_address = (thread.email if thread else None) or (lead.contact_email if lead else None)
         if not to_address:
             # A3 will not synthesise an address. The old code invented
