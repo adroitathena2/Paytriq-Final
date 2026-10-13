@@ -149,7 +149,7 @@ def build_tools(deps, ws: Workspace, guidance: str = "", excluded: set[str] | No
             "type": "object", "properties": {
                 "categories": {**string_list, "description": f"Any of: {', '.join(sorted(CATEGORIES))}"},
                 "radius_km": {"type": "number", "description": f"0.5 to {MAX_RADIUS_KM}"}},
-            "required": ["categories", "radius_km"]}), search_places, timeout=60),
+            "required": ["categories", "radius_km"]}), search_places, timeout=150),
         AgentTool(ToolSpec(name="score_brands", description="Score fit (0-1) of unscored candidates with the LLM.",
                            parameters={"type": "object", "properties": {"rescore_all": {"type": "boolean"}}}),
                   score_brands, timeout=120),

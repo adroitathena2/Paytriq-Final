@@ -1,12 +1,14 @@
 """Finds businesses near a campus.
 
 Primary source: Google Places API (New) when ``GOOGLE_MAPS_API_KEY`` is set. Fallback (and default):
-OpenStreetMap via the free Overpass API, with a mirror if the main server is busy. The result always
+OpenStreetMap via the free Overpass API (main server, then mirrors), and if every Overpass server is
+busy, OpenStreetMap's Nominatim search as a last resort. The result always
 says which source was used and why a fallback happened, so the Discovery agent can reason about it.
 """
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import math
 import re
@@ -33,7 +35,14 @@ CATEGORIES: dict[str, dict] = {
     "bakery": {"google": ["bakery"], "osm": [("shop", "bakery")]},
 }
 
-OVERPASS_MIRRORS = ["https://overpass.kumi.systems/api/interpreter"]
+OVERPASS_MIRRORS = ["https://overpass.private.coffee/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_TERMS = {
+    "cafe": "cafe", "restaurant": "restaurant", "gym": "gym", "salon": "salon", "coaching": "coaching",
+    "bookstore": "book store", "stationery": "stationery", "clothing": "clothes", "electronics": "electronics",
+    "bakery": "bakery",
+}
+USER_AGENT = "Paytriq/0.1 (college student project)"
 GOOGLE_FIELDS = "places.id,places.displayName,places.formattedAddress,places.location,places.websiteUri,places.types"
 
 
@@ -51,7 +60,7 @@ def _id(source: str, raw_id: str) -> str:
 
 class PlacesTool:
     def __init__(self, google_api_key: str = "", overpass_url: str = "https://overpass-api.de/api/interpreter",
-                 timeout: float = 25.0) -> None:
+                 timeout: float = 20.0) -> None:
         self.google_api_key = google_api_key
         self.overpass_urls = [overpass_url, *[m for m in OVERPASS_MIRRORS if m != overpass_url]]
         self.timeout = timeout
@@ -71,8 +80,13 @@ class PlacesTool:
                 fallback_reason = f"Google Places failed: {type(exc).__name__}: {exc}"
         else:
             fallback_reason = "GOOGLE_MAPS_API_KEY not set"
-        places = await self._overpass(lat, lng, radius_km, categories)
-        return {"source": "openstreetmap", "fallback_reason": fallback_reason, "places": places}
+        try:
+            places = await self._overpass(lat, lng, radius_km, categories)
+            return {"source": "openstreetmap", "fallback_reason": fallback_reason, "places": places}
+        except ToolError as exc:
+            fallback_reason = f"{fallback_reason}; {str(exc)[:300]}"
+        places = await self._nominatim(lat, lng, radius_km, categories)
+        return {"source": "openstreetmap_nominatim", "fallback_reason": fallback_reason, "places": places}
 
     async def find_contact(self, website: str) -> str | None:
         return await find_contact_email(website)
@@ -108,25 +122,67 @@ class PlacesTool:
         return results
 
     def overpass_query(self, lat: float, lng: float, radius_km: float, categories: list[str]) -> str:
+        """One clause per OSM key with a regex over its values keeps the query light for busy servers."""
         radius_m = int(radius_km * 1000)
+        values_by_key: dict[str, list[str]] = {}
+        for category in categories:
+            for key, value in CATEGORIES[category]["osm"]:
+                values_by_key.setdefault(key, []).append(value)
         clauses = [
-            f'nwr["{key}"="{value}"]["name"](around:{radius_m},{lat},{lng});'
-            for category in categories for key, value in CATEGORIES[category]["osm"]
+            f'nwr["{key}"~"^({"|".join(sorted(set(values)))})$"]["name"](around:{radius_m},{lat},{lng});'
+            for key, values in sorted(values_by_key.items())
         ]
         return f"[out:json][timeout:25];({''.join(clauses)});out center tags 120;"
 
     async def _overpass(self, lat: float, lng: float, radius_km: float, categories: list[str]) -> list[Brand]:
         query = self.overpass_query(lat, lng, radius_km, categories)
         errors = []
-        async with httpx.AsyncClient(timeout=self.timeout, headers={"User-Agent": "Paytriq/0.1 (student project)"}) as client:
+        async with httpx.AsyncClient(timeout=self.timeout, headers={"User-Agent": USER_AGENT}) as client:
             for url in self.overpass_urls:
                 try:
                     resp = await client.post(url, data={"data": query})
                     resp.raise_for_status()
                     return self._parse_osm(resp.json(), lat, lng, categories)
                 except Exception as exc:
-                    errors.append(f"{url}: {type(exc).__name__} {exc}")
+                    errors.append(f"{url}: {type(exc).__name__} {exc}".strip())
         raise ToolError("OpenStreetMap Overpass unavailable: " + " | ".join(errors))
+
+    async def _nominatim(self, lat: float, lng: float, radius_km: float, categories: list[str]) -> list[Brand]:
+        """Last-resort free source: OpenStreetMap's search service, one keyword per category, max 1 request/s."""
+        dlat = radius_km / 111.0
+        dlng = radius_km / (111.0 * max(math.cos(math.radians(lat)), 0.1))
+        viewbox = f"{lng - dlng},{lat + dlat},{lng + dlng},{lat - dlat}"
+        brands: dict[str, Brand] = {}
+        async with httpx.AsyncClient(timeout=15, headers={"User-Agent": USER_AGENT}) as client:
+            for i, category in enumerate(categories):
+                if i:
+                    await asyncio.sleep(1.1)  # Nominatim usage policy
+                resp = await client.get(NOMINATIM_URL, params={
+                    "q": NOMINATIM_TERMS[category], "format": "jsonv2", "viewbox": viewbox, "bounded": 1,
+                    "limit": 40, "extratags": 1})
+                resp.raise_for_status()
+                for b in self._parse_nominatim(resp.json(), lat, lng, category, radius_km):
+                    brands.setdefault(b.id, b)
+        return list(brands.values())
+
+    @staticmethod
+    def _parse_nominatim(results: list[dict], lat: float, lng: float, category: str, radius_km: float) -> list[Brand]:
+        brands = []
+        for r in results:
+            name = r.get("name") or r.get("display_name", "").split(",")[0]
+            plat, plng = float(r["lat"]), float(r["lon"])
+            distance = haversine_km(lat, lng, plat, plng)
+            if not name or distance > radius_km:
+                continue
+            tags = r.get("extratags") or {}
+            address = ", ".join(r.get("display_name", "").split(", ")[1:4])
+            brands.append(Brand(
+                id=_id("osm", f"{r.get('osm_type')}/{r.get('osm_id')}"), name=name, category=category,
+                address=address or "Address not listed", lat=plat, lng=plng, distance_km=distance,
+                contact_email=tags.get("email") or tags.get("contact:email"),
+                website=tags.get("website") or tags.get("contact:website"),
+            ))
+        return brands
 
     @staticmethod
     def _parse_osm(data: dict, lat: float, lng: float, categories: list[str]) -> list[Brand]:

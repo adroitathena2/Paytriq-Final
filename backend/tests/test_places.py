@@ -22,9 +22,42 @@ def test_parse_osm_maps_categories_and_contacts():
     assert brands[0].distance_km < 0.2
 
 
-def test_overpass_query_uses_radius_in_metres():
-    q = PlacesTool().overpass_query(18.5, 73.8, 2.5, ["salon"])
-    assert '(around:2500,18.5,73.8)' in q and '"shop"="hairdresser"' in q
+def test_overpass_query_uses_radius_in_metres_and_one_clause_per_key():
+    q = PlacesTool().overpass_query(18.5, 73.8, 2.5, ["salon", "bakery", "cafe"])
+    assert "(around:2500,18.5,73.8)" in q
+    assert '"shop"~"^(bakery|beauty|hairdresser)$"' in q
+    assert q.count("nwr[") == 2  # amenity + shop
+
+
+async def test_busy_overpass_falls_back_to_nominatim(monkeypatch):
+    tool = PlacesTool()
+
+    async def overpass_down(*a):
+        raise ToolError("OpenStreetMap Overpass unavailable: 504 Gateway Timeout")
+
+    async def nominatim(*a):
+        return PlacesTool._parse_nominatim(NOMINATIM, 18.5204, 73.8567, "cafe", 2)
+
+    monkeypatch.setattr(tool, "_overpass", overpass_down)
+    monkeypatch.setattr(tool, "_nominatim", nominatim)
+    result = await tool.search(18.5204, 73.8567, 2, ["cafe"])
+    assert result["source"] == "openstreetmap_nominatim"
+    assert "504" in result["fallback_reason"]
+    assert [b.name for b in result["places"]] == ["Cafe Goodluck"]
+
+
+NOMINATIM = [
+    {"osm_type": "node", "osm_id": 1, "lat": "18.521", "lon": "73.857", "name": "Cafe Goodluck",
+     "display_name": "Cafe Goodluck, FC Road, Deccan, Pune", "extratags": {"email": "hi@goodluck.in"}},
+    {"osm_type": "node", "osm_id": 2, "lat": "18.70", "lon": "73.99", "name": "Far Away Cafe",
+     "display_name": "Far Away Cafe, Somewhere"},  # outside the radius: dropped
+]
+
+
+def test_parse_nominatim_keeps_nearby_places_with_contacts():
+    [b] = PlacesTool._parse_nominatim(NOMINATIM, 18.5204, 73.8567, "cafe", 2)
+    assert (b.name, b.category, b.contact_email, b.address) == ("Cafe Goodluck", "cafe", "hi@goodluck.in",
+                                                                 "FC Road, Deccan, Pune")
 
 
 async def test_unknown_category_is_rejected():
