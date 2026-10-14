@@ -1,66 +1,35 @@
-# ---------------------------------------------------------------------------
-# Pre-rebuild prototype (kept locally for reference, deliberately NOT submitted)
-# ---------------------------------------------------------------------------
-old/
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-coverage.xml
-coverage.lcov
-htmlcov/
-
 # Secrets
 .env
 .env.*
 !.env.example
+*.pem
+client_secret*.json
+token*.json
 
-# Generated artifacts (regenerate from a real run - never hand-write)
-traces/
-artifacts/
-out/
-outbox/
-*.pdf
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+backend/.local_storage/
 
-# Local databases (durable checkpointer state, demo-local)
-*.sqlite
-*.sqlite3
-*.db
-*.db-shm
-*.db-wal
-
-# Local model weights and llama.cpp build (multi-GB binaries - never commit).
-# models/ holds Clef-Flash-Q4_K_M.gguf (~6 GB) from
-# https://huggingface.co/ggml-org/Clef-Flash-GGUF  (Apache-2.0)
-# llama/    holds the llama.cpp CUDA release build (needs >= b11364 for `clef`)
-models/
-llama/
-*.gguf
-
-# Downloaded release archives (llama.cpp zips, ~625 MB)
-*.zip
-llama/*.log
-
-
-# Node (only if frontend tooling is added)
+# Node
 node_modules/
+node_modules_old/
 dist/
-.vite/
+*.tsbuildinfo
+.vercel/
 
-# OS / editor
+# Editors / OS
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
-*.swp
 
-# Logs
-*.log
+# Course reference material kept locally (contains personal details)
+*.pdf
+!docs/**/*.pdf
+PAYTRIQ_FULL_BUILD_PROMPT.md
