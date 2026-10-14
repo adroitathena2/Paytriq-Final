@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, StatusBadge, Table, cx } from "../components/ui";
 import { api } from "../lib/api";
+import { RehearsalBanner, RehearsalMarker } from "../components/Banners";
 import { agentLabel, when } from "../lib/format";
-import type { RunRow, TraceEntry } from "../lib/types";
+import { decisionSummary, entryLabel, isArbitration, isRehearsal } from "../lib/loops";
+import type { DecisionEntry, RunRow, TraceEntry } from "../lib/types";
 
 /** Trace index (pick a run) or the timeline of one run. */
 export default function Trace() {
@@ -47,21 +49,6 @@ function RunPicker() {
   );
 }
 
-/** Labels for the coordination loops, so they stand out in the timeline. */
-function loopLabel(e: TraceEntry): string | null {
-  if (e.event_type !== "message") return null;
-  const p = e.payload as { type: string; content: Record<string, unknown>; from_agent: string };
-  if (p.type === "replan") return "L1 self-replan";
-  if (p.type === "revision_request") {
-    if (p.content.source === "critique") return "L2 critique → revision";
-    if (p.content.source === "brand_reply") return "L3 pushback → revision";
-    return "Organizer revision";
-  }
-  if (p.type === "request" && p.content.reason === "replacement") return "L4 replacement";
-  if (p.type === "escalation") return p.from_agent === "roi_audit" ? "L5 evidence escalation" : "Escalation";
-  return null;
-}
-
 const AGENT_COLORS: Record<string, string> = {
   supervisor: "bg-slate-800 text-white",
   discovery: "bg-sky-100 text-sky-800",
@@ -89,6 +76,8 @@ function summary(e: TraceEntry): { headline: string; detail: string } {
       return { headline: `${p.tool} failed`, detail: p.error };
     case "llm_error":
       return { headline: "LLM unavailable", detail: p.error };
+    case "decision":
+      return decisionSummary(p as Partial<DecisionEntry>);
     case "guardrail":
       return { headline: `guardrail: ${p.rule}`, detail: `proposed ${p.proposed?.next}, applied ${p.applied?.next}` };
     case "interrupt":
@@ -120,7 +109,8 @@ function Timeline({ runId }: { runId: string }) {
     () => (entries ?? []).filter((e) => showTools || !["tool_call", "tool_result"].includes(e.event_type)),
     [entries, showTools],
   );
-  const loops = (entries ?? []).filter((e) => loopLabel(e)).length;
+  const loops = (entries ?? []).filter((e) => entryLabel(e)).length;
+  const rehearsal = (entries ?? []).some(isRehearsal);
 
   async function exportTrace() {
     setExporting(true);
@@ -149,6 +139,11 @@ function Timeline({ runId }: { runId: string }) {
           </div>
         }
       />
+      {rehearsal && (
+        <div className="mb-4">
+          <RehearsalBanner />
+        </div>
+      )}
       <label className="mb-4 flex items-center gap-2 text-sm text-slate-600">
         <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={showTools} onChange={(e) => setShowTools(e.target.checked)} />
         Show every tool call and result
@@ -167,23 +162,30 @@ function Timeline({ runId }: { runId: string }) {
 
 function TraceItem({ entry }: { entry: TraceEntry }) {
   const [open, setOpen] = useState(false);
-  const loop = loopLabel(entry);
+  const loop = entryLabel(entry);
+  const arbitration = isArbitration(entry);
   const { headline, detail } = summary(entry);
-  const p = entry.payload as { type?: string };
+  const p = entry.payload as { type?: string; kind?: string };
   const isError = ["tool_error", "llm_error", "error"].includes(entry.event_type);
+  const badgeTone = arbitration ? "warn" : loop ? "accent" : "neutral";
   return (
     <li
       className={cx(
-        "rounded-md border bg-white px-4 py-2.5",
-        loop ? "border-slate-200 border-l-4 border-l-indigo-500" : "border-slate-200",
+        "rounded-md border border-slate-200 bg-white px-4 py-2.5",
+        arbitration ? "border-l-4 border-l-amber-500" : loop && "border-l-4 border-l-indigo-500",
         isError && "border-l-4 border-l-red-400",
       )}
     >
       <button className="flex w-full flex-wrap items-center gap-2 text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="w-28 shrink-0 text-xs tabular-nums text-slate-400">{when(entry.ts)}</span>
         <AgentChip agent={entry.agent} />
-        {entry.event_type === "message" ? <Badge tone={loop ? "accent" : "neutral"}>{p.type?.replace(/_/g, " ")}</Badge> : <Badge>{entry.event_type.replace(/_/g, " ")}</Badge>}
-        {loop && <span className="text-xs font-medium text-indigo-700">{loop}</span>}
+        {entry.event_type === "message" ? (
+          <Badge tone={badgeTone}>{p.type?.replace(/_/g, " ")}</Badge>
+        ) : (
+          <Badge tone={badgeTone}>{entry.event_type === "decision" && p.kind ? `${p.kind} decision` : entry.event_type.replace(/_/g, " ")}</Badge>
+        )}
+        {loop && <span className={cx("text-xs font-medium", arbitration ? "text-amber-800" : "text-indigo-700")}>{loop}</span>}
+        {isRehearsal(entry) && <RehearsalMarker />}
         <span className="text-sm font-medium text-slate-800">{headline}</span>
         {detail && <span className="min-w-0 flex-1 truncate text-sm text-slate-500">{detail}</span>}
       </button>

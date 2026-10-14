@@ -12,12 +12,21 @@
       "lng": 73.8394
     }
   },
+  "create_demo_event": {
+    "endpoint": "POST /events/demo",
+    "body": { "rehearsal": false },
+    "note": "Creates the same event as create_event with demo_scenario = demo: fixture businesses and inbox, real Gemini reasoning."
+  },
+  "start_run": { "endpoint": "POST /events/{event_id}/runs", "body": null },
   "approve_shortlist": {
     "endpoint": "POST /runs/{run_id}/approve",
     "body": {
       "gate": "shortlist",
       "decision": "approve",
-      "edits": { "selected_brand_ids": ["osm-3f2a9c1b7d", "osm-8b11e0c2aa", "osm-c94d02f513"] }
+      "edits": {
+        "selected_brand_ids": ["demo-chai-junction", "demo-bean-theory", "demo-ironcore-gym",
+                               "demo-metro-wholesale", "demo-pulsefit-gym", "demo-apex-coaching"]
+      }
     }
   },
   "reject_shortlist_with_feedback": {
@@ -34,23 +43,32 @@
       "gate": "send",
       "decision": "approve",
       "edits": {
-        "exclude": ["osm-c94d02f513"],
-        "emails": { "osm-3f2a9c1b7d": { "subject": "Fergusson Fest x your cafe", "body": "Hi! ..." } }
+        "exclude": [],
+        "emails": { "demo-bean-theory": { "subject": "Fergusson Fest x Bean Theory Cafe", "body": "Hi! ..." } }
       }
     }
   },
   "poll_replies": { "endpoint": "POST /runs/{run_id}/poll-replies", "body": null },
+  "add_demo_evidence": { "endpoint": "POST /runs/{run_id}/demo-evidence", "body": null },
   "add_evidence_link": {
     "endpoint": "POST /runs/{run_id}/evidence (multipart/form-data)",
-    "form": { "brand_id": "osm-3f2a9c1b7d", "link": "https://www.instagram.com/p/EXAMPLE/", "note": "1 Instagram post" }
+    "form": { "brand_id": "demo-apex-coaching", "link": "https://www.instagram.com/p/EXAMPLE/", "note": "1 Instagram post" }
   },
   "add_evidence_photo": {
     "endpoint": "POST /runs/{run_id}/evidence (multipart/form-data)",
-    "form": { "brand_id": "osm-3f2a9c1b7d", "file": "stage.jpg (image/jpeg, <= 8 MB)", "note": "Logo on main stage banner" }
+    "form": { "brand_id": "demo-apex-coaching", "file": "stage.jpg (image/jpeg, <= 8 MB)", "note": "Logo on main stage banner" }
   },
-  "run_audit": { "endpoint": "POST /runs/{run_id}/audit", "body": null },
+  "run_audit": {
+    "endpoint": "POST /runs/{run_id}/audit",
+    "body": { "actual_footfall": 1500 }
+  },
+  "publish_with_gaps": {
+    "endpoint": "POST /runs/{run_id}/publish-with-gaps",
+    "body": null,
+    "note": "Only in phase roi_blocked (arbitration A3). The roi_publish approval below still follows."
+  },
   "publish_report": {
     "endpoint": "POST /runs/{run_id}/approve",
-    "body": { "gate": "roi_publish", "decision": "approve", "edits": { "note": "Stall photos were lost; disclosed." } }
+    "body": { "gate": "roi_publish", "decision": "approve", "edits": { "note": "Stall photo was lost; disclosed." } }
   }
 }

@@ -13,6 +13,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
 
+from app import demo
 from app.agents import discovery, outreach, proposal, roi_audit
 from app.graph import approval, supervisor
 from app.graph.deps import Deps
@@ -31,7 +32,8 @@ WORKERS = {
 
 def _bind(fn, deps: Deps):
     async def node(state: EventState, config):
-        return await fn(state, deps.for_run(config["configurable"]["thread_id"]))
+        run_deps = demo.scenario_deps(deps.for_run(config["configurable"]["thread_id"]), state)
+        return await fn(state, run_deps)
 
     node.__name__ = getattr(fn, "__module__", "node")
     return node

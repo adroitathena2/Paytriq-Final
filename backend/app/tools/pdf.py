@@ -71,7 +71,8 @@ def render_proposal_pdf(event: dict, brand: Brand, proposal: Proposal) -> bytes:
     story += [
         tiers_table,
         Spacer(1, 8 * mm),
-        Paragraph("Expected reach combines on-ground visibility at the event with the organizers' social posts. "
+        Paragraph("Expected reach combines on-ground visibility at the event with the organizers' social posts"
+                  + (f" ({_esc(proposal.reach_note)} by this organizer)" if proposal.reach_note else "") + ". "
                   "After the event you receive a verified ROI report with photo evidence for every deliverable.",
                   s["small"]),
         Spacer(1, 3 * mm),

@@ -41,6 +41,7 @@ export function stepForPhase(phase: string | undefined): Step {
     case "roi":
     case "roi_review":
     case "awaiting_evidence":
+    case "roi_blocked":
     case "done":
       return "roi";
     default:
@@ -64,6 +65,7 @@ export const PHASE_LABELS: Record<string, string> = {
   roi: "Auditing deliverables",
   roi_review: "ROI report ready for review",
   awaiting_evidence: "Waiting for more evidence",
+  roi_blocked: "Publishing blocked: proof missing",
   done: "Report published",
   blocked: "Blocked",
 };

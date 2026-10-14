@@ -66,7 +66,7 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 const STATUS_TONES: Record<string, Tone> = {
   running: "accent", waiting_approval: "warn", idle: "neutral", completed: "good", failed: "bad", stalled: "warn",
   draft: "neutral", needs_revision: "warn", ready: "accent", sent: "accent", accepted: "good", declined: "bad",
-  replied: "accent", nudged: "neutral", pushback: "warn", bounced: "bad",
+  replied: "accent", nudged: "neutral", pushback: "warn", bounced: "bad", on_hold: "warn", infeasible: "bad",
   verified: "good", not_verified: "bad", ambiguous: "warn", missing: "bad",
 };
 

@@ -33,6 +33,14 @@ async def emit(deps, from_agent: str, to_agent: str, type_: str, content: dict, 
     return msg
 
 
+async def log_decision(deps, log: list[dict], **entry) -> dict:
+    """Append one entry to the supervisor's ``decision_log`` and write it to the trace as ``decision``."""
+    entry = {"ts": datetime.now(UTC).isoformat(), **entry}
+    log.append(entry)
+    await deps.log("supervisor", "decision", entry)
+    return entry
+
+
 def handled_ids(state: EventState) -> set[str]:
     done: set[str] = set()
     for m in state.get("messages", []):

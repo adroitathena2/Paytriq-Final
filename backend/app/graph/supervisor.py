@@ -6,7 +6,13 @@ check the choice:
 
 - at most ``MAX_STEPS`` supervisor steps between two human/external touchpoints, then escalate;
 - an approval gate can only be opened when there is something to approve;
-- the same ordered pair of agents may hand off at most ``MAX_PAIR_LOOPS`` times, then escalate.
+- the same ordered pair of agents may hand off at most ``MAX_PAIR_LOOPS`` times, then escalate;
+- agents (not the organizer) may ask Proposal to revise one brand at most ``MAX_AGENT_REVISIONS`` times;
+  a further request is not passed on: the brand goes on hold and the organizer gets an escalation.
+
+Before routing, conflicts between agents are settled by the rules in ``graph/arbitration.py`` (A1-A3).
+Every routing decision, guardrail hit and arbitration is appended to ``decision_log`` and traced as
+``decision``.
 
 (Emails are never sent without an approved ``pending_approval``: that check lives in the Outreach
 agent's send tool, where the email actually leaves the system.)
@@ -25,11 +31,13 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from app.core.llm import LLMError
-from app.graph.messages import as_message, emit, open_requests, recent
-from app.graph.state import EventState
+from app.graph import arbitration
+from app.graph.messages import as_message, emit, handled_ids, log_decision, open_requests, recent
+from app.graph.state import AgentMessage, EventState
 
 MAX_STEPS = 25
 MAX_PAIR_LOOPS = 3
+MAX_AGENT_REVISIONS = 2
 AGENTS = ("discovery", "proposal", "outreach", "roi_audit")
 Next = Literal["discovery", "proposal", "outreach", "roi_audit", "human_approval", "END"]
 Gate = Literal["shortlist", "send", "roi_publish"]
@@ -58,10 +66,13 @@ Agents:
 
 Rules:
 - Open requests addressed to an agent are work for that agent; prefer resolving them.
+- A proposal with status "on_hold" hit the revision cap and waits for the organizer; do not route work for it.
 - Never route to outreach to send emails unless pending_approval is an approved "send" gate.
-- When roi_audit reported gaps, arbitrate: either "human_approval" with gate "roi_publish" (publish with
-  the gaps disclosed) or "END" (wait for the organizer to upload the missing evidence). Weigh how much was
-  verified, how critical the missing items are, and what the escalation asked for. Explain the trade-off.
+- Conflicts between agents (a top-ranked brand bounced, a price far above past accepted deals, ROI gaps
+  before publishing) are arbitrated by fixed rules A1-A3 before you are asked; their outcome is on the
+  blackboard as messages. Route the resulting requests like any other work.
+- The "roi_publish" gate can only open when the report has no gaps or the organizer chose to publish with
+  the gaps disclosed (publish_with_gaps).
 - Keep the reason to one or two sentences that a teammate could check against the blackboard."""
 
 
@@ -89,7 +100,8 @@ def snapshot(state: EventState) -> dict:
         "open_escalations_to_human": [m.content for m in open_requests(state, "human")],
         "pending_approval": {"gate": pending.get("gate"), "status": pending.get("status")} if pending else None,
         "roi": {"gaps": len(report.get("disclosed_gaps", [])), "delivery_rate": report.get("overall_delivery_rate"),
-                "published": report.get("published", False)} if report else None,
+                "published": report.get("published", False),
+                "publish_with_gaps": state.get("publish_with_gaps", False)} if report else None,
         "recent_messages": recent(state, 8),
         "recent_errors": state.get("errors", [])[-5:],
     }
@@ -151,8 +163,9 @@ def gate_has_content(state: EventState, gate: str | None) -> bool:
         return bool(state.get("brands"))
     if gate == "send":
         return bool(pending_emails(state))
-    if gate == "roi_publish":
-        return bool(state.get("roi_report"))
+    if gate == "roi_publish":  # A3: never offer publishing while proof is missing, unless disclosed on purpose
+        report = state.get("roi_report") or {}
+        return bool(report) and (not report.get("disclosed_gaps") or bool(state.get("publish_with_gaps")))
     return False
 
 
@@ -171,6 +184,51 @@ def apply_guardrails(state: EventState, decision: RouteDecision) -> tuple[RouteD
             next="END", reason=f"Hand-off to {decision.next} repeated {MAX_PAIR_LOOPS} times; escalating to the organizer."
         ), "pair_loop"
     return decision, None
+
+
+def revision_cap(state: EventState) -> tuple[dict[str, int], list[AgentMessage]]:
+    """Count agent-initiated revision requests per brand in bus order.
+
+    Returns the per-brand count of requests let through (at most ``MAX_AGENT_REVISIONS``) and the
+    still-open requests beyond the cap. Organizer requests (``from_agent == "human"``) are never counted.
+    """
+    done = handled_ids(state)
+    counts: dict[str, int] = {}
+    over_cap: list[AgentMessage] = []
+    for m in map(as_message, state.get("messages", [])):
+        brand_id = m.content.get("brand_id")
+        if m.type != "revision_request" or m.to_agent != "proposal" or m.from_agent == "human" or not brand_id:
+            continue
+        if counts.get(brand_id, 0) < MAX_AGENT_REVISIONS:
+            counts[brand_id] = counts.get(brand_id, 0) + 1
+        elif m.id not in done:
+            over_cap.append(m)
+    return counts, over_cap
+
+
+async def hold_capped_brands(state: EventState, deps, log: list[dict]) -> dict:
+    """Stop revision requests over the cap: answer each with an escalation to the organizer, hold the brand."""
+    counts, over_cap = revision_cap(state)
+    update: dict = {"revision_count": counts, "messages": []}
+    if not over_cap:
+        return update
+    proposals = {k: v.model_copy(deep=True) for k, v in state.get("proposals", {}).items()}
+    for request in over_cap:
+        brand_id = request.content["brand_id"]
+        reason = (f"{request.from_agent} asked for revision {MAX_AGENT_REVISIONS + 1} of {brand_id}'s proposal; "
+                  f"agents may request at most {MAX_AGENT_REVISIONS}, so the brand is on hold until the organizer decides.")
+        update["messages"].append(await emit(
+            deps, "supervisor", "human", "escalation",
+            {"reason": "revision_cap", "brand_id": brand_id, "blocked_request": request.id,
+             "from_agent": request.from_agent, "constraint": request.content.get("constraint"),
+             "in_reply_to": [request.id]}, reason,
+        ))
+        if brand_id in proposals:
+            proposals[brand_id].status = "on_hold"
+        await log_decision(deps, log, kind="guardrail", rule="revision_cap", next=None, reason=reason, source="code",
+                           brand_id=brand_id)
+    update["proposals"] = proposals
+    return update
 
 
 def gate_payload(state: EventState, gate: str) -> dict:
@@ -193,21 +251,43 @@ def gate_payload(state: EventState, gate: str) -> dict:
 END_PHASES = {"roi_review": "awaiting_evidence"}
 
 
+def merged(state: EventState, update: dict) -> EventState:
+    """The blackboard as it will be after ``update`` (messages are appended, other fields replaced)."""
+    return {**state, **update, "messages": [*state.get("messages", []), *update.get("messages", [])]}
+
+
 async def run(state: EventState, deps) -> Command:
-    try:
-        decision = await deps.llm.generate(
-            purpose="supervisor.route", system=SYSTEM, context=snapshot(state), schema=RouteDecision
-        )
-        source = "llm"
-    except LLMError as exc:
-        await deps.log("supervisor", "llm_error", {"purpose": "supervisor.route", "error": str(exc)})
-        decision, source = fallback_route(state), "fallback"
+    log = list(state.get("decision_log", []))
+    # 1. Rules first: arbitration may post new requests, then the revision cap checks every open one.
+    arb = await arbitration.arbitrate(state, deps, log)
+    pre: dict = {**arb.update, "messages": arb.messages}
+    cap = await hold_capped_brands(merged(state, pre), deps, log)
+    pre = {**pre, **cap, "messages": [*arb.messages, *cap["messages"]]}
+    state = merged(state, pre)  # route on the blackboard as the rules left it
+
+    # 2. Routing: forced by an arbitration rule, else the LLM, else the deterministic fallback.
+    if arb.route:
+        nxt, gate, reason = arb.route
+        decision, source = RouteDecision(next=nxt, gate=gate, reason=reason), "arbitration"
+    else:
+        try:
+            decision = await deps.llm.generate(
+                purpose="supervisor.route", system=SYSTEM, context=snapshot(state), schema=RouteDecision
+            )
+            source = "llm"
+        except LLMError as exc:
+            await deps.log("supervisor", "llm_error", {"purpose": "supervisor.route", "error": str(exc)})
+            decision, source = fallback_route(state), "fallback"
 
     final, guardrail = apply_guardrails(state, decision)
     if guardrail:
         await deps.log("supervisor", "guardrail", {"rule": guardrail, "proposed": decision.model_dump(),
                                                    "applied": final.model_dump()})
-    messages = [await emit(
+        await log_decision(deps, log, kind="guardrail", rule=guardrail, next=final.next, proposed=decision.next,
+                           reason=final.reason, source=source)
+    await log_decision(deps, log, kind="route", next=final.next, gate=final.gate, reason=final.reason,
+                       source=source, guardrail=guardrail, step=state.get("step_count", 0) + 1)
+    messages = [*pre["messages"], await emit(
         deps, "supervisor", final.next, "decision",
         {"next": final.next, "gate": final.gate, "source": source, "guardrail": guardrail}, final.reason,
     )]
@@ -215,7 +295,8 @@ async def run(state: EventState, deps) -> Command:
         messages.append(await emit(deps, "supervisor", "human", "escalation",
                                    {"reason": guardrail, "phase": state.get("phase")}, final.reason))
 
-    update: dict = {"messages": messages, "step_count": state.get("step_count", 0) + 1}
+    update: dict = {**pre, "messages": messages, "step_count": state.get("step_count", 0) + 1,
+                    "decision_log": log}
     if final.next == "human_approval":
         update["pending_approval"] = {"gate": final.gate, "status": "waiting", "payload": gate_payload(state, final.gate)}
         return Command(goto="human_approval", update=update)

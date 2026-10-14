@@ -14,7 +14,13 @@ Adaptation:
   of the LLM and used when (re)scoring.
 - L4 replacement: when Outreach reports a decline/bounce, the supervisor sends Discovery here with a
   ``request`` (reason ``replacement``); the agent picks the next-best unused brand (searching again if
-  needed) and replies with the replacement.
+  needed) and replies with the replacement. Every open request gets its own replacement brand.
+- L6 category feedback: when Outreach reports two negative outcomes in one category (``request`` with
+  reason ``category_feedback``), every brand of that category is down-weighted (x ``CATEGORY_PENALTY``),
+  the list is re-ranked, and replacements (preferring other categories) are pulled until the organizer's
+  shortlist size is met again.
+- L7 infeasible: when Proposal finds no workable deal for a brand (reason ``infeasible``), it is replaced
+  like a decline.
 """
 
 from __future__ import annotations
@@ -33,6 +39,8 @@ GOOD_FIT = 0.6
 GOOD_TARGET = 5
 MAX_REPLANS = 2
 MAX_RADIUS_KM = 4.0
+CATEGORY_PENALTY = 0.6
+REPLACE_REASONS = ("replacement", "infeasible")
 ADJACENT = {
     "cafe": ["bakery", "restaurant"], "restaurant": ["cafe", "bakery"], "gym": ["salon", "clothing"],
     "salon": ["gym", "clothing"], "coaching": ["bookstore", "stationery"], "bookstore": ["stationery", "coaching"],
@@ -76,12 +84,16 @@ class Workspace:
         self.picked: str | None = None
         self.pick_reason = ""
 
+        self.penalised: set[str] = set()  # categories down-weighted after negative outreach outcomes
+
     def good(self) -> list[Brand]:
-        return sorted((b for b in self.candidates.values() if b.fit_score >= GOOD_FIT),
+        return sorted((b for b in self.candidates.values() if b.fit_score >= GOOD_FIT and not b.unreachable),
                       key=lambda b: b.fit_score, reverse=True)
 
     def ranked(self) -> list[Brand]:
-        return sorted(self.candidates.values(), key=lambda b: (b.fit_score, -b.distance_km), reverse=True)
+        """Best first; unreachable brands and penalised categories go to the end."""
+        return sorted(self.candidates.values(), reverse=True, key=lambda b: (
+            not b.unreachable, b.category not in self.penalised, b.fit_score, -b.distance_km))
 
 
 def build_tools(deps, ws: Workspace, guidance: str = "", excluded: set[str] | None = None) -> list[AgentTool]:
@@ -189,9 +201,10 @@ async def plan_replan(deps, ws: Workspace, attempt: int, radius: float, categori
 
 async def run(state: EventState, deps) -> dict:
     requests = open_requests(state, AGENT)
-    replacement = next((r for r in requests if r.content.get("reason") == "replacement"), None)
-    if replacement:
-        return await _replace(state, deps, replacement, [r.id for r in requests])
+    replacements = [r for r in requests if r.content.get("reason") in REPLACE_REASONS]
+    categories = [r for r in requests if r.content.get("reason") == "category_feedback"]
+    if replacements or categories:  # other requests (e.g. organizer feedback) stay open for the next turn
+        return await _replace_all(state, deps, replacements, categories)
     feedback = " ".join(r.content.get("feedback", "") for r in requests if r.content.get("feedback"))
     return await _discover(state, deps, feedback, [r.id for r in requests])
 
@@ -234,27 +247,83 @@ async def _discover(state: EventState, deps, feedback: str, request_ids: list[st
     return {"brands": brands, "messages": messages, "errors": errors, "phase": "shortlist_review"}
 
 
-async def _replace(state: EventState, deps, request, request_ids: list[str]) -> dict:
-    declined = request.content.get("brand_id")
-    used = set(state.get("selected_brand_ids", [])) | set(state.get("outreach", {})) | {declined}
-    ws = Workspace(state)
-    tools = build_tools(deps, ws, excluded=used)
-    context = {"task": "find_replacement", "event": ws.event, "declined_brand": declined,
-               "why": request.content.get("why"), "instructions": "Pick the best unused brand, preferably with an "
-               "email and a different angle from the one that declined. Search again only if no option is good."}
-    result = await run_tool_loop(deps, AGENT, "discovery.replace", SYSTEM, context, tools)
-    errors = list(state.get("errors", [])) + result.errors
+def dropped(state: EventState, brand_id: str) -> bool:
+    """A selected brand that no longer counts toward the shortlist (declined, bounced, infeasible, unreachable)."""
+    thread = state.get("outreach", {}).get(brand_id)
+    proposal = state.get("proposals", {}).get(brand_id)
+    brand = next((b for b in state.get("brands", []) if b.id == brand_id), None)
+    return bool((thread and thread.status in ("declined", "bounced"))
+                or (proposal and proposal.status in ("declined", "infeasible")) or (brand and brand.unreachable))
 
-    if ws.picked is None:  # the LLM did not decide: fall back to the best unused good-fit brand
-        fallback = next((b for b in ws.ranked() if b.id not in used and b.fit_score >= GOOD_FIT), None)
+
+async def _pick_one(state: EventState, deps, ws: Workspace, request, used: set[str]) -> tuple[str | None, list]:
+    """One reasoning loop that picks a replacement for one request; falls back to the best unused brand."""
+    ws.picked, ws.pick_reason = None, ""
+    gone = request.content.get("brand_id")
+    context = {"task": "find_replacement", "event": ws.event, "replace_brand": gone,
+               "reason": request.content.get("reason"), "why": request.content.get("why"),
+               "penalised_categories": sorted(ws.penalised),
+               "instructions": "Pick the best unused brand, preferably with an email and a different angle from the "
+                               "one being replaced; avoid penalised categories. Search again only if no option is good."}
+    result = await run_tool_loop(deps, AGENT, "discovery.replace", SYSTEM, context, build_tools(deps, ws, excluded=used))
+    if ws.picked is None:  # the LLM did not decide: best unused good-fit brand
+        fallback = next((b for b in ws.ranked() if b.id not in used and b.fit_score >= GOOD_FIT and not b.unreachable),
+                        None)
         if fallback:
             ws.picked, ws.pick_reason = fallback.id, "Highest-ranked unused brand (automatic choice)."
-    content = {"replacement_for": declined, "brand_id": ws.picked, "in_reply_to": request_ids}
-    if ws.picked is None:
-        msg = await emit(deps, AGENT, "human", "escalation", content,
-                         "No suitable replacement brand is left; consider widening the search or another category.")
-        return {"messages": [msg], "errors": errors, "brands": ws.ranked()}
-    msg = await emit(deps, AGENT, "supervisor", "result", content,
-                     ws.pick_reason or f"Replacing {declined} with {ws.candidates[ws.picked].name}.")
-    return {"messages": [msg], "errors": errors, "brands": ws.ranked(), "phase": "proposals",
-            "selected_brand_ids": [*state.get("selected_brand_ids", []), ws.picked]}
+    return ws.picked, result.errors
+
+
+async def _replace_all(state: EventState, deps, replacements: list, categories: list) -> dict:
+    ws = Workspace(state)
+    errors, messages = list(state.get("errors", [])), []
+    selected = list(state.get("selected_brand_ids", []))
+    used = set(selected) | set(state.get("outreach", {})) | {r.content.get("brand_id") for r in replacements}
+
+    # L6: down-weight a category that keeps failing, so the replacements below come from other categories.
+    for request in categories:
+        category = request.content.get("category")
+        hit = [b for b in ws.candidates.values() if b.category == category]
+        for b in hit:
+            b.fit_score = round(b.fit_score * CATEGORY_PENALTY, 2)
+        ws.penalised.add(category)
+        messages.append(await emit(deps, AGENT, "supervisor", "result", {
+            "reason": "category_penalty", "category": category, "factor": CATEGORY_PENALTY, "rescored": len(hit),
+            "evidence": request.content.get("evidence", [])},
+            f"{category} brands had {request.content.get('negative', 2)} negative outcomes; scores x{CATEGORY_PENALTY} "
+            "and re-ranked so replacements come from other categories."))
+
+    # L4 / L7: one replacement per request.
+    picks: list[str] = []
+    for request in replacements:
+        gone = request.content.get("brand_id")
+        picked, loop_errors = await _pick_one(state, deps, ws, request, used)
+        errors += loop_errors
+        content = {"replacement_for": gone, "brand_id": picked, "reason": request.content.get("reason"),
+                   "in_reply_to": [request.id]}
+        if picked is None:
+            messages.append(await emit(deps, AGENT, "human", "escalation", content,
+                                       f"No suitable replacement for {gone} is left; consider widening the search."))
+            continue
+        used.add(picked)
+        picks.append(picked)
+        messages.append(await emit(deps, AGENT, "supervisor", "result", content,
+                                   ws.pick_reason or f"Replacing {gone} with {ws.candidates[picked].name}."))
+
+    # L6: top up until the organizer's shortlist size is met again.
+    if categories:
+        new_selected = selected + picks
+        target = state.get("target_brand_count") or len(selected)
+        active = [b for b in new_selected if not dropped(state, b)]
+        extra = [b for b in ws.ranked() if b.id not in used and not b.unreachable
+                 and b.fit_score >= GOOD_FIT][:max(0, target - len(active))]
+        picks += [b.id for b in extra]
+        messages.append(await emit(deps, AGENT, "supervisor", "result", {
+            "reason": "category_feedback", "categories": sorted(ws.penalised), "added": [b.id for b in extra],
+            "target": target, "in_reply_to": [r.id for r in categories]},
+            f"Re-ranked after category feedback; added {len(extra)} brand(s) to keep {target} active sponsors in play."))
+
+    update = {"messages": messages, "errors": errors, "brands": ws.ranked()}
+    if picks:
+        update.update(phase="proposals", selected_brand_ids=selected + picks)
+    return update

@@ -1,7 +1,10 @@
+import asyncio
+from types import SimpleNamespace
+
 import pytest
 from pydantic import BaseModel
 
-from app.core.llm import FINISH_TOOL, FakeLLM, LLMError, ToolSpec, _with_reasoning, render_context
+from app.core.llm import FINISH_TOOL, FakeLLM, GeminiLLM, LLMError, ToolSpec, _with_reasoning, render_context
 
 SEARCH = ToolSpec(name="search", description="search")
 
@@ -37,6 +40,55 @@ async def test_choosing_a_tool_that_was_not_offered_fails():
     llm = FakeLLM(decide={"a": {"name": "delete_everything"}})
     with pytest.raises(LLMError):
         await llm.decide(purpose="a", system="", context={}, tools=[SEARCH])
+
+
+class FlakyModels:
+    """Stands in for client.aio.models: raises the given errors in order, then answers."""
+
+    def __init__(self, errors):
+        self.errors = list(errors)
+        self.calls = 0
+
+    async def generate_content(self, **_):
+        self.calls += 1
+        if self.errors:
+            raise self.errors.pop(0)
+        return "response"
+
+
+def gemini_with(models) -> GeminiLLM:
+    llm = GeminiLLM.__new__(GeminiLLM)  # no real client, no network
+    llm.client = SimpleNamespace(aio=SimpleNamespace(models=models))
+    llm.model, llm.min_interval_s, llm._last_call = "gemini-flash-latest", 0.0, 0.0
+    llm.RETRY_DELAYS = (0, 0, 0, 0)
+    llm._lock = asyncio.Lock()
+    return llm
+
+
+class ApiError(Exception):
+    def __init__(self, code):
+        super().__init__(f"HTTP {code}")
+        self.code = code
+
+
+async def test_gemini_retries_rate_limits_then_succeeds():
+    models = FlakyModels([ApiError(429), ApiError(503)])
+    assert await gemini_with(models)._generate_content([], None) == "response"
+    assert models.calls == 3
+
+
+async def test_gemini_gives_up_with_llm_error_so_callers_can_fall_back():
+    models = FlakyModels([ApiError(429)] * 5)
+    with pytest.raises(LLMError, match="after retries"):
+        await gemini_with(models)._generate_content([], None)
+    assert models.calls == 5
+
+
+async def test_gemini_timeout_is_an_llm_error_not_a_crash():
+    models = FlakyModels([TimeoutError("read timed out")])
+    with pytest.raises(LLMError):
+        await gemini_with(models)._generate_content([], None)
+    assert models.calls == 1  # no point retrying a non-retryable error
 
 
 def test_every_tool_requires_reasoning_and_context_is_json():

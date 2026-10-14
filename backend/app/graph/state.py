@@ -22,6 +22,7 @@ class Brand(BaseModel):
     website: str | None = None
     fit_score: float = 0.0
     fit_reason: str = ""
+    unreachable: bool = False  # set by arbitration A1 when an email to this brand bounced
 
 
 class Tier(BaseModel):
@@ -37,8 +38,9 @@ class Proposal(BaseModel):
     tiers: list[Tier]
     pitch: str
     pdf_url: str | None = None
-    # draft -> (needs_revision) -> ready -> sent -> accepted | declined
+    # draft -> (needs_revision) -> ready -> sent -> accepted | declined; also on_hold, infeasible
     status: str = "draft"
+    reach_note: str | None = None  # L8: "estimate calibrated from N past events" when calibration was applied
 
 
 ThreadStatus = Literal["draft", "sent", "replied", "nudged", "accepted", "declined", "pushback", "bounced"]
@@ -79,6 +81,13 @@ class EventState(TypedDict, total=False):
     phase: str
     step_count: int
     errors: list[dict]
+    # supervisor's own record: every route, guardrail hit and arbitration, with its reason and source
+    decision_log: list[dict]
+    feedback: dict[str, list[str]]  # brand_id -> outreach outcomes (accepted, declined, bounced, silent)
+    revision_count: dict[str, int]  # brand_id -> agent-initiated revision requests let through (cap 2)
+    publish_with_gaps: bool  # organizer explicitly chose "Publish with gaps disclosed" (arbitration A3)
+    target_brand_count: int  # shortlist size the organizer approved; L6 tops up to keep it
+    actual_footfall: int | None  # optional, given with the audit request; used for L8 calibration
 
 
 # Classes the checkpointer may deserialize (LangGraph warns about unlisted types).
@@ -100,4 +109,10 @@ def initial_state(event_id: str, event: dict) -> EventState:
         phase="discovery",
         step_count=0,
         errors=[],
+        decision_log=[],
+        feedback={},
+        revision_count={},
+        publish_with_gaps=False,
+        target_brand_count=0,
+        actual_footfall=None,
     )

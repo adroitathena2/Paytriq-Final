@@ -1,5 +1,6 @@
 """API behaviour: validation, ownership, run lifecycle and trace export (auth disabled, fakes only)."""
 
+import asyncio
 import time
 
 import pytest
@@ -74,6 +75,8 @@ def test_approve_requires_a_pending_gate(client):
     wait_until_settled(client, run["id"])
     resp = client.post(f"/runs/{run['id']}/approve", json={"gate": "send", "decision": "approve"})
     assert resp.status_code == 409
+    # "Publish with gaps disclosed" is only possible while A3 blocks publishing
+    assert client.post(f"/runs/{run['id']}/publish-with-gaps").status_code == 409
 
 
 def test_evidence_upload_validation_and_audit_trigger(client):
@@ -96,6 +99,53 @@ def test_evidence_upload_validation_and_audit_trigger(client):
     assert client.get(f"/runs/{run['id']}/report").status_code == 404
     audit = client.post(f"/runs/{run['id']}/audit")
     assert audit.status_code == 202 and audit.json()["evidence_items"] == 2
+
+
+def test_oversized_and_empty_photos_get_413(client):
+    event = client.post("/events", json=EVENT).json()
+    run = client.post(f"/events/{event['id']}/runs").json()
+    wait_until_settled(client, run["id"])
+    url = f"/runs/{run['id']}/evidence"
+    big = b"\xff\xd8" + b"0" * (8 * 1024 * 1024)
+    resp = client.post(url, data={"brand_id": "b1"}, files={"file": ("big.jpg", big, "image/jpeg")})
+    assert resp.status_code == 413 and "8 MB" in resp.json()["detail"]
+    empty = client.post(url, data={"brand_id": "b1"}, files={"file": ("e.jpg", b"", "image/jpeg")})
+    assert empty.status_code in (413, 422)
+
+
+def test_continue_resumes_a_failed_run(client):
+    event = client.post("/events", json=EVENT).json()
+    run = client.post(f"/events/{event['id']}/runs").json()
+    wait_until_settled(client, run["id"])
+    services = client.app.state.services
+    asyncio.run(services.db.update_run(run["id"], status="failed", last_error="RuntimeError: boom"))
+    assert client.get(f"/runs/{run['id']}").json()["run"]["status"] == "failed"
+
+    assert client.post(f"/runs/{run['id']}/continue").status_code == 202
+    body = wait_until_settled(client, run["id"])
+    assert body["run"]["status"] == "idle" and body["run"]["last_error"] is None
+    trace = client.get(f"/runs/{run['id']}/trace").json()
+    assert any(t["event_type"] == "run_start" and t["payload"]["trigger"] == "continue" for t in trace)
+
+
+def test_continue_refuses_a_completed_run(client):
+    event = client.post("/events", json=EVENT).json()
+    run = client.post(f"/events/{event['id']}/runs").json()
+    wait_until_settled(client, run["id"])
+    asyncio.run(client.app.state.services.db.update_run(run["id"], status="completed"))
+    resp = client.post(f"/runs/{run['id']}/continue")
+    assert resp.status_code == 409 and "already complete" in resp.json()["detail"]
+
+
+def test_unexpected_errors_get_a_friendly_500(client):
+    async def broken(*_):
+        raise RuntimeError("database exploded")
+
+    client.app.state.services.db.list_events = broken
+    with TestClient(client.app, raise_server_exceptions=False) as c:
+        resp = c.get("/events")
+    assert resp.status_code == 500
+    assert resp.json() == {"detail": "Something went wrong on our side. Please retry."}
 
 
 def test_unknown_ids_are_404(client):

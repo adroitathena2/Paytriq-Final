@@ -12,6 +12,7 @@ httpx==0.28.1
 reportlab==5.0.1
 PyJWT[crypto]==2.15.1
 python-multipart==0.0.32
+pillow==11.1.0
 
 # dev / test
 pytest==9.1.1

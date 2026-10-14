@@ -43,6 +43,7 @@ const SOURCE_LABEL: Record<string, string> = {
   critique: "Outreach critique",
   brand_reply: "Brand pushback",
   organizer: "Your feedback",
+  arbitration: "Supervisor price cap (A2)",
 };
 
 function ProposalCard({ proposal, brandName, revisions }: { proposal: Proposal; brandName: string; revisions: AgentMessage[] }) {
@@ -76,6 +77,7 @@ function ProposalCard({ proposal, brandName, revisions }: { proposal: Proposal; 
         ))}
       </div>
       <div className="px-5 py-3.5">
+        {proposal.reach_note && <p className="mb-2 text-xs text-slate-500">Reach estimate: {proposal.reach_note}</p>}
         <p className={open ? "text-sm text-slate-700" : "line-clamp-2 text-sm text-slate-700"}>{proposal.pitch}</p>
         <button className="mt-1 text-xs text-slate-500 hover:text-slate-800" onClick={() => setOpen(!open)}>
           {open ? "Show less" : "Show full pitch"}

@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-flash-latest"
     gemini_min_interval_s: float = 0.0  # spacing between LLM calls, helps on the free tier
 
+    # Cloudflare Clef (judgement layer for L6/L7; without it the old rules decide)
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = ""
+    clef_model: str = "clef-flash"  # or "clef"
+    clef_enabled: bool = True
+
     # Supabase
     supabase_url: str = ""
     supabase_service_role_key: str = ""

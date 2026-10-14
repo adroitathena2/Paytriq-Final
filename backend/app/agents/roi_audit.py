@@ -9,8 +9,13 @@ Honesty rules enforced in code after the loop:
 - anything not clearly verified (missing, ambiguous, not_verified) is listed as a disclosed gap and
   lowers the delivery rate, never rounded up;
 - L5: when there are gaps, the agent sends an ``escalation`` to the organizer asking for the specific
-  extra evidence instead of guessing. The supervisor then arbitrates between publishing with the gaps
-  disclosed and waiting for that evidence.
+  extra evidence instead of guessing. The supervisor's arbitration rule A3 then blocks publishing until
+  new evidence passes a re-audit or the organizer explicitly chooses to publish with the gaps disclosed.
+
+L8 calibration: for each sponsor the report also carries a reach factor = reach of the *verified*
+deliverables at the actual footfall (if the organizer gave one) / the reach the proposal estimated. It is
+only a proposal inside the report; it is saved for the Proposal agent (per organizer and category) when the
+organizer approves publishing, so an unapproved report never calibrates anything.
 """
 
 from __future__ import annotations
@@ -18,6 +23,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from app.agents.loop import AgentTool, run_tool_loop
+from app.agents.proposal import estimate_reach
 from app.core.llm import ToolSpec
 from app.graph.messages import emit, open_requests
 from app.graph.state import EventState
@@ -45,7 +51,7 @@ def accepted_sponsors(state: EventState) -> list[dict]:
         proposal = state["proposals"][brand_id]
         tier = next((t for t in proposal.tiers if t.name == tier_name), proposal.tiers[0])
         out.append({"brand_id": brand_id, "name": brands[brand_id].name if brand_id in brands else brand_id,
-                    "tier": tier.name, "price_inr": tier.price_inr, "expected_reach": tier.expected_reach,
+                    "category": brands[brand_id].category if brand_id in brands else None, "tier": tier.name, "price_inr": tier.price_inr, "expected_reach": tier.expected_reach,
                     "deliverables": tier.deliverables})
     return out
 
@@ -99,19 +105,36 @@ def build_tools(deps, ws: Workspace) -> list[AgentTool]:
     ]
 
 
+def calibration(state: EventState, sponsor: dict, checks: list[DeliverableCheck]) -> dict:
+    """L8: reach the verified deliverables achieved at the actual footfall, relative to the estimate."""
+    actual = state.get("actual_footfall")
+    footfall = actual or state["event"]["expected_footfall"]
+    verified = [c.deliverable for c in checks if c.status == "verified"]
+    reach = 0
+    if verified and checks:
+        full = estimate_reach({"expected_footfall": footfall}, sponsor["tier"], verified)
+        reach = int(round(full * len(verified) / len(checks), -1))
+    factor = round(reach / sponsor["expected_reach"], 2) if sponsor["expected_reach"] else None
+    return {"category": sponsor.get("category"), "factor": factor, "verified_reach": reach,
+            "estimated_reach": sponsor["expected_reach"], "footfall_used": footfall,
+            "footfall_source": "actual" if actual else "expected"}
+
+
 def build_report(state: EventState, ws: Workspace) -> dict:
     rows, gaps = [], []
     for brand_id, sponsor in ws.sponsors.items():
         checks = ws.checks.get(brand_id, [])
         delivered = sum(c.status == "verified" for c in checks)
         rows.append({**sponsor, "checks": [c.model_dump() for c in checks], "delivered": delivered,
-                     "total": len(checks), "delivery_rate": round(delivered / len(checks), 2) if checks else 0.0})
+                     "total": len(checks), "delivery_rate": round(delivered / len(checks), 2) if checks else 0.0,
+                     "calibration": calibration(state, sponsor, checks)})
         gaps += [{"brand_id": brand_id, "brand_name": sponsor["name"], "deliverable": c.deliverable,
                   "status": c.status, "explanation": c.explanation} for c in checks if c.status in GAP_STATUSES]
     total = sum(r["total"] for r in rows)
     event = state["event"]
     return {
         "event": {k: event.get(k) for k in ("name", "college", "date", "expected_footfall")},
+        "actual_footfall": state.get("actual_footfall"),
         "generated_at": datetime.now(UTC).isoformat(),
         "sponsors": rows,
         "overall_delivery_rate": round(sum(r["delivered"] for r in rows) / total, 2) if total else 0.0,
@@ -120,6 +143,33 @@ def build_report(state: EventState, ws: Workspace) -> dict:
         "summary": ws.summary or f"{sum(r['delivered'] for r in rows)} of {total} promised deliverables verified.",
         "published": False,
     }
+
+
+async def commit_calibration(deps, report: dict) -> list:
+    """L8, called when the organizer approves publishing: save one factor per category (running average)
+    and tell the Proposal agent. Failures are traced but never block publishing."""
+    by_category: dict[str, list[float]] = {}
+    for sponsor in report.get("sponsors", []):
+        cal = sponsor.get("calibration") or {}
+        if cal.get("category") and cal.get("factor") is not None:
+            by_category.setdefault(cal["category"], []).append(cal["factor"])
+    messages = []
+    try:
+        owner = await deps.owner_id()
+        if owner is None:
+            return []
+        for category, factors in by_category.items():
+            factor = round(sum(factors) / len(factors), 2)
+            row = await deps.db.save_calibration(owner, category, factor)
+            messages.append(await emit(deps, AGENT, "proposal", "result", {
+                "reason": "calibration", "category": category, "event_factor": factor,
+                "factor": round(row["factor"], 2), "n_events": row["n_events"],
+                "actual_footfall": report.get("actual_footfall")},
+                f"Approved report: {category} sponsors got {factor:.0%} of the estimated reach from verified "
+                f"deliverables; future {category} estimates use x{row['factor']:.2f} ({row['n_events']} event(s))."))
+    except Exception as exc:
+        await deps.log(AGENT, "tool_error", {"tool": "db.save_calibration", "error": str(exc)})
+    return messages
 
 
 def default_request(gap: dict) -> str:

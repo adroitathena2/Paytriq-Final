@@ -12,7 +12,11 @@ export interface EventRow {
   lng: number;
   created_at: string;
   runs?: RunRow[];
+  /** "demo" = fixture businesses + real Gemini; "rehearsal" = scripted LLM, not for submission. */
+  demo_scenario?: DemoScenario | null;
 }
+
+export type DemoScenario = "demo" | "rehearsal";
 
 export type RunStatus = "running" | "waiting_approval" | "idle" | "completed" | "failed" | "stalled";
 export type Gate = "shortlist" | "send" | "roi_publish";
@@ -41,6 +45,7 @@ export interface Brand {
   website: string | null;
   fit_score: number;
   fit_reason: string;
+  unreachable?: boolean;
 }
 
 export interface Tier {
@@ -56,7 +61,8 @@ export interface Proposal {
   tiers: Tier[];
   pitch: string;
   pdf_url: string | null;
-  status: string;
+  status: string; // e.g. draft, ready, sent, on_hold
+  reach_note?: string | null;
 }
 
 export interface HistoryEntry {
@@ -130,6 +136,44 @@ export interface RunState {
   phase: string;
   step_count: number;
   errors: { agent: string; tool: string; error: string }[];
+  decision_log: DecisionEntry[];
+  feedback: Record<string, string[]>;
+  revision_count: Record<string, number>;
+  publish_with_gaps: boolean;
+}
+
+/** One supervisor decision; also written to the trace as event_type "decision". */
+export interface DecisionEntry {
+  ts: string;
+  kind: "route" | "guardrail" | "arbitration" | "clef_judgement";
+  next: string;
+  reason: string;
+  source: "llm" | "fallback" | "code" | "clef" | "rule_fallback";
+  // clef_judgement entries (written by proposal / outreach for L7 / L6)
+  purpose?: string;
+  question?: string;
+  p_yes?: number | null;
+  answer?: boolean;
+  escalated?: boolean;
+  rule_answer?: boolean;
+  rule?: string; // A1|A2|A3 for arbitration; max_steps|empty_gate|pair_loop|revision_cap for guardrail
+  gate?: string;
+  step?: number;
+  proposed?: string | Record<string, unknown>;
+  brand_id?: string;
+  conflict?: string;
+  agents?: string[];
+  resolution?: string;
+  justification?: string;
+}
+
+export interface TraceExport {
+  run_id: string;
+  event_id: string;
+  exported_at: string;
+  note: string;
+  rehearsal: boolean;
+  entries: TraceEntry[];
 }
 
 export interface EmailDraft {

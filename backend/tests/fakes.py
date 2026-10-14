@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from app.core.clef import FakeClef
 from app.graph.state import Brand
 from app.tools.base import ToolError
 
@@ -50,6 +51,18 @@ def failing(times: int, then: Callable[[float, list[str]], list[Brand]]):
         return then(radius, categories)
 
     return results
+
+
+# --- Clef ----------------------------------------------------------------------------------------
+
+def rule_clef() -> FakeClef:
+    """Default Clef for tests: confident answers that reproduce the old L6/L7 rules."""
+    from app.agents.proposal import NO_FIT_CATEGORIES
+
+    return FakeClef({
+        "proposal.feasibility": lambda s: 0.05 if s["brand"]["category"] in NO_FIT_CATEGORIES else 0.95,
+        "outreach.category_feedback": 0.9,
+    })
 
 
 # --- Discovery -----------------------------------------------------------------------------------

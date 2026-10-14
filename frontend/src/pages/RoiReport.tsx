@@ -8,10 +8,12 @@ import type { Evidence, RoiReport as Report } from "../lib/types";
 import type { StepProps } from "./EventsDetail";
 
 /** ROI step inside the event page: upload evidence, run the audit, review and publish the report. */
-export function RoiStep({ runId, detail, busy, act }: StepProps) {
+export function RoiStep({ runId, detail, busy, act, demoScenario }: StepProps) {
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [footfall, setFootfall] = useState("");
   const report = detail.values.roi_report;
   const gate = detail.interrupt?.gate === "roi_publish" ? detail.interrupt : null;
+  const blocked = detail.values.phase === "roi_blocked";
   const escalation = [...(detail.values.messages ?? [])].reverse().find((m) => m.from_agent === "roi_audit" && m.type === "escalation");
 
   const loadEvidence = useCallback(() => {
@@ -24,6 +26,16 @@ export function RoiStep({ runId, detail, busy, act }: StepProps) {
   const sponsors = threads.filter((t) => t.status === "accepted").map((t) => t.brand_id);
   const idle = detail.run.status !== "running" && detail.run.status !== "waiting_approval";
 
+  // Optional real attendance; empty means "use the expected footfall".
+  const footfallNum = footfall.trim() === "" ? null : Number(footfall);
+  const footfallInvalid = footfallNum !== null && (!Number.isInteger(footfallNum) || footfallNum < 10 || footfallNum > 200000);
+  const runAudit = () => act(() => api.startAudit(runId, footfallNum));
+  const addDemoEvidence = () =>
+    act(async () => {
+      await api.addDemoEvidence(runId);
+      loadEvidence();
+    });
+
   if (!sponsors.length && !report)
     return <EmptyState title="No sponsors have accepted yet" hint="Once a brand accepts, upload event photos here after the event to prove delivery." />;
 
@@ -32,7 +44,11 @@ export function RoiStep({ runId, detail, busy, act }: StepProps) {
       {gate && report && (
         <ApprovalCard
           title="Publish the ROI report?"
-          description="The supervisor recommends publishing with any gaps disclosed. You can also wait and upload more evidence."
+          description={
+            detail.values.publish_with_gaps
+              ? "You chose to publish with gaps disclosed. The missing proof will be listed in the report. Approve to publish."
+              : "The supervisor recommends publishing with any gaps disclosed. You can also wait and upload more evidence."
+          }
         >
           <div className="flex flex-wrap gap-2">
             <Button busy={busy} onClick={() => act(() => api.approve(runId, "roi_publish", "approve"))}>
@@ -45,7 +61,18 @@ export function RoiStep({ runId, detail, busy, act }: StepProps) {
         </ApprovalCard>
       )}
 
-      {escalation && !report?.published && (
+      {blocked && (
+        <BlockedPanel
+          report={report}
+          fallbackRequests={(escalation?.content.requests as string[] | undefined) ?? []}
+          busy={busy}
+          canAct={idle}
+          onRerun={runAudit}
+          onPublishWithGaps={() => act(() => api.publishWithGaps(runId))}
+        />
+      )}
+
+      {escalation && !blocked && !report?.published && (
         <div className="rounded-md border-l-4 border-indigo-500 bg-indigo-50/50 px-4 py-3 text-sm text-slate-700">
           <p className="font-medium">The ROI Audit agent needs more evidence instead of guessing:</p>
           <ul className="mt-1 list-disc pl-5">
@@ -61,11 +88,32 @@ export function RoiStep({ runId, detail, busy, act }: StepProps) {
           title="Evidence"
           subtitle="Photos or links proving each deliverable. Mention the deliverable in the note."
           action={
-            <Button busy={busy} disabled={!idle || evidence.length === 0} onClick={() => act(() => api.startAudit(runId))}>
-              Run ROI audit
-            </Button>
+            <div className="flex flex-wrap items-end justify-end gap-2">
+              {demoScenario && (
+                <Button variant="secondary" disabled={busy} onClick={addDemoEvidence}>
+                  Add demo evidence
+                </Button>
+              )}
+              <label className="text-xs text-slate-500">
+                Actual footfall (optional)
+                <Input
+                  type="number"
+                  min={10}
+                  max={200000}
+                  placeholder={String(detail.values.event?.expected_footfall ?? "")}
+                  value={footfall}
+                  onChange={(e) => setFootfall(e.target.value)}
+                  className="mt-0.5 w-36"
+                  aria-invalid={footfallInvalid}
+                />
+              </label>
+              <Button busy={busy} disabled={!idle || evidence.length === 0 || footfallInvalid} onClick={runAudit}>
+                {report ? "Re-run audit" : "Run ROI audit"}
+              </Button>
+            </div>
           }
         />
+        {footfallInvalid && <p className="px-5 pt-2 text-sm text-red-700">Actual footfall must be a whole number between 10 and 200,000.</p>}
         <EvidenceForm runId={runId} sponsors={sponsors.length ? sponsors : (detail.values.selected_brand_ids ?? [])} names={brands} onAdded={loadEvidence} />
         {evidence.length > 0 && (
           <Table head={["Sponsor", "Type", "Note", "Added"]}>
@@ -91,6 +139,76 @@ export function RoiStep({ runId, detail, busy, act }: StepProps) {
 
       {report && <ReportView report={report} runId={runId} />}
     </div>
+  );
+}
+
+/**
+ * Rule A3: the audit found missing or ambiguous proof, so publishing is blocked. The organizer either adds
+ * evidence and re-runs the audit, or explicitly chooses to publish with the gaps disclosed.
+ */
+function BlockedPanel({
+  report,
+  fallbackRequests,
+  busy,
+  canAct,
+  onRerun,
+  onPublishWithGaps,
+}: {
+  report: Report | null | undefined;
+  fallbackRequests: string[];
+  busy: boolean;
+  canAct: boolean;
+  onRerun: () => void;
+  onPublishWithGaps: () => void;
+}) {
+  const gaps = report?.disclosed_gaps ?? [];
+  const requests = report?.evidence_requests?.length ? report.evidence_requests : fallbackRequests;
+  return (
+    <section className="rounded-lg border border-slate-200 border-l-4 border-l-amber-500 bg-white" aria-label="Publishing blocked">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Publishing blocked (rule A3)</p>
+        <h3 className="mt-1 text-sm font-semibold text-slate-900">Some promised deliverables have no clear proof yet</h3>
+        <p className="mt-0.5 text-sm text-slate-600">
+          Upload the missing evidence below and re-run the audit, or publish now with these gaps disclosed in the report.
+        </p>
+      </div>
+      <div className="space-y-3 px-5 py-4 text-sm">
+        {gaps.length > 0 && (
+          <ul className="space-y-1.5">
+            {gaps.map((g) => (
+              <li key={`${g.brand_id}-${g.deliverable}`} className="flex flex-wrap items-start gap-2">
+                <StatusBadge status={g.status} />
+                <span className="font-medium text-slate-800">
+                  {g.brand_name}: {g.deliverable}
+                </span>
+                <span className="text-slate-500">{g.explanation}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {requests.length > 0 && (
+          <div>
+            <p className="font-medium text-slate-700">Evidence that would resolve this:</p>
+            <ul className="mt-1 list-disc pl-5 text-slate-600">
+              {requests.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button busy={busy} disabled={!canAct} onClick={onRerun}>
+            Re-run audit
+          </Button>
+          <Button variant="secondary" disabled={busy || !canAct} onClick={onPublishWithGaps}>
+            Publish with gaps disclosed
+          </Button>
+        </div>
+        <p className="text-xs text-slate-500">
+          Publishing with gaps still stops at the normal approval step: you review the report before it goes out.
+        </p>
+      </div>
+    </section>
   );
 }
 

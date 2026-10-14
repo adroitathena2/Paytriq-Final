@@ -1,5 +1,5 @@
 import { accessToken } from "./auth";
-import type { Evidence, EventRow, Gate, Health, RoiReport, RunDetail, RunRow, TraceEntry } from "./types";
+import type { Evidence, EventRow, Gate, Health, RoiReport, RunDetail, RunRow, TraceEntry, TraceExport } from "./types";
 
 export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -55,7 +55,11 @@ export const api = {
   pollReplies: (runId: string) => request<{ status: string }>(`/runs/${runId}/poll-replies`, { method: "POST" }),
   listEvidence: (runId: string) => request<Evidence[]>(`/runs/${runId}/evidence`),
   addEvidence: (runId: string, form: FormData) => request<Evidence>(`/runs/${runId}/evidence`, { method: "POST", body: form }),
-  startAudit: (runId: string) => request<{ status: string }>(`/runs/${runId}/audit`, { method: "POST" }),
+  startAudit: (runId: string, actualFootfall: number | null = null) =>
+    request<{ status: string }>(`/runs/${runId}/audit`, json({ actual_footfall: actualFootfall })),
+  publishWithGaps: (runId: string) => request<{ status: string }>(`/runs/${runId}/publish-with-gaps`, { method: "POST" }),
+  createDemoEvent: (rehearsal: boolean) => request<EventRow>("/events/demo", json({ rehearsal })),
+  addDemoEvidence: (runId: string) => request<{ added: number }>(`/runs/${runId}/demo-evidence`, { method: "POST" }),
   report: (runId: string) => request<RoiReport>(`/runs/${runId}/report`),
   trace: (runId: string) => request<TraceEntry[]>(`/runs/${runId}/trace`),
 
@@ -66,11 +70,20 @@ export const api = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) throw new ApiError("Could not export the trace.", res.status);
-    const blob = await res.blob();
+    // Download the server's bytes unchanged; only peek at the "rehearsal" flag to name the file.
+    const text = await res.text();
+    let rehearsal = false;
+    try {
+      rehearsal = (JSON.parse(text) as Partial<TraceExport>).rehearsal === true;
+    } catch {
+      rehearsal = false;
+    }
+    const blob = new Blob([text], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `paytriq-trace-${runId}.json`;
+    link.download = `${rehearsal ? "REHEARSAL-NOT-FOR-SUBMISSION-" : ""}paytriq-trace-${runId}.json`;
     link.click();
-    URL.revokeObjectURL(link.href);
+    // revoking synchronously can cancel the download in Firefox/Safari
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   },
 };

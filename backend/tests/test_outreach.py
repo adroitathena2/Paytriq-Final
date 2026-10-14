@@ -1,8 +1,12 @@
-"""Outreach agent: pre-send critique (L2), approval-gated sending, reply handling (L3, L4) and nudges."""
+"""Outreach agent: pre-send critique (L2), approval-gated sending, reply handling (L3, L4), category feedback
+judged by Clef (L6) and nudges."""
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from app.agents import outreach
+from app.core.clef import ClefError, FakeClef
 from app.core.llm import FakeLLM, LLMError
 from app.graph.messages import new_message
 from tests.factories import brand, proposal, state, thread
@@ -114,13 +118,124 @@ async def test_replies_are_classified_and_routed(make_deps, settings):
     [pushback] = by_type(update, "revision_request")  # L3
     assert pushback.content["brand_id"] == "b1" and pushback.content["max_price_inr"] == 15000
     assert pushback.content["source"] == "brand_reply" and threads["b1"].status == "pushback"
-    replacements = {m.content["brand_id"] for m in by_type(update, "request") if m.to_agent == "discovery"}  # L4
+    replacements = {m.content["brand_id"] for m in by_type(update, "request")
+                    if m.content.get("reason") == "replacement"}  # L4
     assert replacements == {"b2", "b4"}
+    # a decline and a bounce, both cafes: L6 tells Discovery about the category as well
+    assert any(m.content.get("category") == "cafe" for m in by_type(update, "request"))
     assert threads["b2"].status == "declined" and threads["b4"].status == "bounced"
     assert threads["b3"].status == "accepted" and threads["b3"].history[-1]["tier"] == "Silver"
     assert update["proposals"]["b3"].status == "accepted"
     assert update["phase"] == "proposals"
     assert update["messages"][-1].content["in_reply_to"] == [poll.id]
+
+
+async def test_two_gym_declines_send_category_feedback_to_discovery(make_deps, settings):
+    """L6 (Outreach side): outcomes are recorded per brand; 2 negatives in one category -> category_feedback."""
+    gmail = FakeGmail(settings)
+    gmail.reply("thread-1", "Sorry, not interested this year.")
+    gmail.reply("thread-2", "Thanks, but not interested.")
+    gmail.reply("thread-3", "We will go with Silver!")
+    s, _ = live_state(gmail)
+    s["brands"] = [brand(1, category="gym"), brand(2, category="gym"), brand(3), brand(4)]
+    update = await outreach.run(s, make_deps(llm(), gmail=gmail))
+
+    assert update["feedback"] == {"b1": ["declined"], "b2": ["declined"], "b3": ["accepted"]}
+    [category] = [m for m in by_type(update, "request") if m.content.get("reason") == "category_feedback"]
+    assert (category.to_agent, category.content["category"], category.content["negative"]) == ("discovery", "gym", 2)
+    assert {e["brand_id"] for e in category.content["evidence"]} == {"b1", "b2"}
+
+    again = await outreach.run({**s, "feedback": update["feedback"], "messages": [*s["messages"], category]},
+                               make_deps(llm(), gmail=gmail))
+    assert not [m for m in again["messages"] if m.content.get("reason") == "category_feedback"]  # told once
+
+
+def gym_workspace(feedback: dict, messages=()) -> outreach.Workspace:
+    brands = [brand(1, category="gym"), brand(2, category="gym"), brand(3, category="gym"), brand(4)]
+    return outreach.Workspace(state(brands=brands, feedback=feedback, messages=list(messages)))
+
+
+async def clef_entries(db) -> list[dict]:
+    return [t["payload"] for t in await db.list_trace("run-test")
+            if t["event_type"] == "decision" and t["payload"]["kind"] == "clef_judgement"]
+
+
+@pytest.mark.parametrize(("p_yes", "sent", "source", "escalated"), [
+    (0.9, True, "clef", False),                       # Clef: yes, stop prioritising gyms
+    (0.1, False, "clef", False),                      # Clef: no, keep gyms (e.g. one gym accepted)
+    (0.5, True, "clef", True),                        # unsure: rule (send) + ask the organizer
+    (ClefError("HTTP 503"), True, "rule_fallback", False),
+])
+async def test_l6_category_feedback_is_judged_by_clef(make_deps, db, p_yes, sent, source, escalated):
+    clef = FakeClef({"outreach.category_feedback": p_yes})
+    ws = gym_workspace({"b1": ["declined"], "b2": ["bounced"], "b3": ["accepted"]})
+    await outreach.category_feedback(make_deps(llm(), clef=clef), ws)
+
+    asked = clef.calls[0]["state"]
+    assert asked["category"] == "gym" and {e["outcome"] for e in asked["evidence"]} == {"declined", "bounced"}
+    assert asked["positive_outcomes"] == [{"brand": "Brand 3", "outcome": "accepted"}]
+    assert asked["event_audience"] == state()["event"]["audience"]
+    [entry] = await clef_entries(db)
+    assert (entry["purpose"], entry["source"], entry["escalated"], entry["rule_answer"]) == (
+        "outreach.category_feedback", source, escalated, True)
+    requests = [m for m in ws.messages if m.content.get("reason") == "category_feedback"]
+    assert len(requests) == int(sent)
+    if sent:
+        assert requests[0].content["decided_by"] == source
+        assert requests[0].content["p_yes"] == (None if source == "rule_fallback" else p_yes)
+    else:
+        assert ws.category_checks == {"gym": 2}
+    escalations = [m for m in ws.messages if m.type == "escalation"]
+    assert [m.content["reason"] for m in escalations] == (["clef_unsure"] if escalated else [])
+
+
+async def test_l6_a_no_is_only_asked_again_after_a_new_negative(make_deps, db):
+    clef = FakeClef({"outreach.category_feedback": [0.1, 0.9]})
+    deps = make_deps(llm(), clef=clef)
+    feedback = {"b1": ["declined"], "b2": ["bounced"]}
+    first = gym_workspace(feedback)
+    await outreach.category_feedback(deps, first)
+    assert first.category_checks == {"gym": 2} and not first.messages
+    # Outreach's step result carries the remembered "no"
+    remembered = new_message("outreach", "supervisor", "result", {"category_checks": first.category_checks}, "done")
+
+    same = gym_workspace(feedback, [remembered])  # next poll, nothing new: not asked again
+    await outreach.category_feedback(deps, same)
+    assert len(clef.calls) == 1 and not same.messages
+
+    worse = gym_workspace({**feedback, "b3": ["silent"]}, [remembered])  # a third gym went silent
+    await outreach.category_feedback(deps, worse)
+    assert len(clef.calls) == 2
+    [request] = worse.messages
+    assert (request.content["category"], request.content["negative"], request.content["decided_by"]) == ("gym", 3, "clef")
+    assert len(await clef_entries(db)) == 2
+
+
+async def test_acceptance_is_remembered_as_a_deal(make_deps, settings, db):
+    db.runs["run-test"] = {"id": "run-test", "owner_id": "user-1"}
+    gmail = FakeGmail(settings)
+    gmail.reply("thread-3", "We will go with Silver!")
+    s, _ = live_state(gmail)
+    s["proposals"]["b3"].tiers[1].price_inr = 9000  # Silver after a counter-offer
+    await outreach.run(s, make_deps(llm(), gmail=gmail))
+    [deal] = await db.list_deals("user-1", "cafe")
+    assert (deal["brand_id"], deal["tier"], deal["price_inr"], deal["event_id"]) == ("b3", "Silver", 9000, "event-1")
+    assert await db.list_deals("user-2", "cafe") == []
+
+
+async def test_deal_store_failure_does_not_block_acceptance(make_deps, settings, db):
+    db.runs["run-test"] = {"id": "run-test", "owner_id": "user-1"}
+
+    async def broken(*_):
+        raise RuntimeError("db down")
+
+    db.add_deal = broken
+    gmail = FakeGmail(settings)
+    gmail.reply("thread-3", "We will go with Gold!")
+    s, _ = live_state(gmail)
+    update = await outreach.run(s, make_deps(llm(), gmail=gmail))
+    assert update["outreach"]["b3"].status == "accepted"
+    assert any(e["tool"] == "db.add_deal" for e in update["errors"])
 
 
 async def test_silent_thread_gets_a_nudge_draft(make_deps, settings):

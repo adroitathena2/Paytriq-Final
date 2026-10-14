@@ -12,6 +12,14 @@ Its reasoning loop (agents/loop.py) is offered only the tools that fit the curre
   pushback_deliverables, declined, out_of_office, unrelated), and per brand: ``route_pushback`` (L3:
   revision_request with the brand's constraint), ``request_replacement`` (L4: decline or bounce, asks
   Discovery), ``mark_accepted``, or ``draft_nudge`` for threads silent for NUDGE_AFTER_DAYS.
+
+Every outcome (accepted, declined, bounced, silent after a nudge) is recorded per brand in ``feedback``.
+L6: when one category collects ``CATEGORY_NEGATIVE_LIMIT`` negative outcomes, Outreach asks Cloudflare Clef
+(core/clef.py) "given these outcomes, should we stop prioritising this category?". The counter only decides
+when to ask. On yes (P(yes) >= 0.75, or the rule fallback when Clef is unavailable or unsure) Outreach tells
+Discovery (``request`` with reason ``category_feedback``, the evidence, ``p_yes`` and ``decided_by``) so it stops
+pitching that category; when Clef is unsure the organizer also gets an ``escalation``. A "no" is asked again
+only after a new negative outcome in that category. Reply classification stays on Gemini.
 """
 
 from __future__ import annotations
@@ -22,6 +30,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.agents.loop import AgentTool, run_tool_loop
+from app.core.clef import judge, unsure_escalation
 from app.core.llm import ToolSpec
 from app.graph.messages import as_message, emit, open_requests
 from app.graph.state import EventState, OutreachThread
@@ -31,6 +40,10 @@ from app.tools.pdf import render_proposal_pdf
 
 AGENT = "outreach"
 LIVE_STATUSES = {"sent", "nudged", "replied", "pushback"}
+NEGATIVE_OUTCOMES = {"declined", "bounced", "silent"}
+CATEGORY_NEGATIVE_LIMIT = 2  # when to ask Clef about a category, not the answer
+CATEGORY_PURPOSE = "outreach.category_feedback"
+CATEGORY_QUESTION = "Given these outcomes, should we stop prioritising this business category for this event?"
 ReplyLabel = Literal["interested", "accepted", "pushback_price", "pushback_deliverables", "declined",
                      "out_of_office", "unrelated"]
 
@@ -100,6 +113,13 @@ class Workspace:
         self.errors: list[dict] = []
         self.sent: list[str] = []
         self.send_attempted = False
+        self.feedback: dict[str, list[str]] = {k: list(v) for k, v in state.get("feedback", {}).items()}
+        self.category_checks: dict[str, int] = {}  # L6 categories Clef said to keep this step
+
+    def record_outcome(self, brand_id: str, outcome: str) -> None:
+        outcomes = self.feedback.setdefault(brand_id, [])
+        if outcome not in outcomes:
+            outcomes.append(outcome)
 
     def thread(self, brand_id: str) -> OutreachThread:
         return self.threads.setdefault(brand_id, OutreachThread(brand_id=brand_id))
@@ -209,6 +229,9 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
             ws.replies[brand_id] = {"text": latest["text"][:1500], "from": latest["from"]}
             summary[brand_id] = latest["text"][:300]
         silent = ws.silent_threads(s.nudge_after_days)
+        for brand_id in silent:  # already nudged and still silent: count it as a negative outcome
+            if ws.threads[brand_id].status == "nudged":
+                ws.record_outcome(brand_id, "silent")
         return {"new_replies": summary, "silent_threads": silent, "nudge_after_days": s.nudge_after_days}
 
     async def classify_replies() -> dict:
@@ -252,6 +275,7 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
         thread = ws.thread(brand_id)
         if thread.status != "bounced":
             thread.status = "declined"
+        ws.record_outcome(brand_id, thread.status)
         if brand_id in ws.proposals:
             ws.proposals[brand_id].status = "declined"
         ws.messages.append(await emit(deps, AGENT, "discovery", "request",
@@ -268,7 +292,9 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
         thread.history.append({"type": "accepted", "tier": tier, "ts": now_iso()})
         if brand_id in ws.proposals:
             ws.proposals[brand_id].status = "accepted"
-        return {"accepted": brand_id, "tier": tier}
+        ws.record_outcome(brand_id, "accepted")
+        deal = await record_deal(deps, ws, brand_id, tier)
+        return {"accepted": brand_id, "tier": tier, "deal_recorded": deal is not None}
 
     async def draft_nudge(brand_id: str, body: str) -> dict:
         if brand_id not in ws.silent_threads(s.nudge_after_days):
@@ -321,6 +347,27 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
     return tools
 
 
+async def record_deal(deps, ws: Workspace, brand_id: str, tier: str) -> dict | None:
+    """Remember an accepted deal (latest proposal version, so the price is after any counter-offer).
+
+    The supervisor's A2 arbitration compares future prices with these. A failed write is recorded as an
+    error and never blocks the acceptance itself.
+    """
+    brand, proposal = ws.brands.get(brand_id), ws.proposals.get(brand_id)
+    price = next((t.price_inr for t in proposal.tiers if t.name == tier), None) if proposal else None
+    if brand is None or price is None:
+        return None
+    try:
+        owner = await deps.owner_id()
+        if owner is None:
+            return None
+        return await deps.db.add_deal(owner, {"event_id": ws.state.get("event_id"), "brand_id": brand_id,
+                                              "category": brand.category, "tier": tier, "price_inr": price})
+    except Exception as exc:
+        ws.errors.append({"agent": AGENT, "tool": "db.add_deal", "error": str(exc), "brand_id": brand_id})
+        return None
+
+
 async def _send_all(deps, ws: Workspace) -> dict:
     ws.send_attempted = True
     order = list(ws.state.get("selected_brand_ids", []))
@@ -365,6 +412,64 @@ async def _send_all(deps, ws: Workspace) -> dict:
     return {"sent": sent, "failed": failed}
 
 
+def category_checks_so_far(state: EventState) -> dict[str, int]:
+    """Categories Clef already said "keep" for, with the negative-outcome count at that time (L6)."""
+    checks: dict[str, int] = {}
+    for m in map(as_message, state.get("messages", [])):
+        if m.from_agent == AGENT:
+            for category, count in (m.content.get("category_checks") or {}).items():
+                checks[category] = max(count, checks.get(category, 0))
+    return checks
+
+
+async def category_feedback(deps, ws: Workspace) -> None:
+    """L6: when a category reaches ``CATEGORY_NEGATIVE_LIMIT`` negative outcomes, ask Clef whether to stop
+    prioritising it, and tell Discovery only if the answer is yes (once per category).
+
+    The counter only decides when to ask. A "no" is remembered in this step's result message
+    (``content.category_checks``) and asked again only after a new negative outcome in that category.
+    """
+    told = {as_message(m).content.get("category") for m in ws.state.get("messages", [])
+            if as_message(m).content.get("reason") == "category_feedback" and as_message(m).from_agent == AGENT}
+    checked = category_checks_so_far(ws.state)
+    by_category: dict[str, list[dict]] = {}
+    positive: dict[str, list[dict]] = {}
+    negatives: dict[str, int] = {}
+    for brand_id, outcomes in ws.feedback.items():
+        brand = ws.brands.get(brand_id)
+        if brand is None:
+            continue
+        bad = [o for o in outcomes if o in NEGATIVE_OUTCOMES]
+        if bad:
+            by_category.setdefault(brand.category, []).append({"brand_id": brand_id, "name": brand.name,
+                                                               "outcome": bad[-1]})
+            negatives[brand.category] = negatives.get(brand.category, 0) + len(bad)
+        if "accepted" in outcomes:
+            positive.setdefault(brand.category, []).append({"brand": brand.name, "outcome": "accepted"})
+    for category, evidence in by_category.items():
+        if len(evidence) < CATEGORY_NEGATIVE_LIMIT or category in told:
+            continue
+        if negatives[category] <= checked.get(category, 0):
+            continue  # Clef already said keep it, and nothing new went wrong since
+        j = await judge(deps, agent=AGENT, purpose=CATEGORY_PURPOSE, question=CATEGORY_QUESTION, rule_answer=True,
+                        state={"category": category,
+                               "evidence": [{"brand": e["name"], "outcome": e["outcome"]} for e in evidence],
+                               "positive_outcomes": positive.get(category, []),
+                               "event_audience": ws.event.get("audience")})
+        if j.escalate:
+            ws.messages.append(await unsure_escalation(
+                deps, AGENT, CATEGORY_PURPOSE, j, f"whether to stop prioritising {category} brands",
+                {"category": category}))
+        if not j.answer:
+            ws.category_checks[category] = negatives[category]
+            continue
+        ws.messages.append(await emit(deps, AGENT, "discovery", "request", {
+            "reason": "category_feedback", "category": category, "negative": len(evidence), "evidence": evidence,
+            "p_yes": j.p_yes, "decided_by": j.source},
+            f"{len(evidence)} {category} brands said no or never answered "
+            f"({', '.join(e['name'] + ': ' + e['outcome'] for e in evidence)}); stop prioritising {category}."))
+
+
 def next_phase(ws: Workspace) -> str:
     if any(e.get("type") == "email_draft" and e.get("state") == "pending" for t in ws.threads.values() for e in t.history):
         return "send_review"
@@ -401,13 +506,16 @@ async def run(state: EventState, deps) -> dict:
             summary = f"{summary} Sent the organizer-approved emails.".strip()
     else:
         summary = "Nothing for outreach to do right now."
+    await category_feedback(deps, ws)
     errors += ws.errors
 
     content = {"sent": ws.sent, "threads": {b: t.status for b, t in ws.threads.items()},
                "in_reply_to": [r.id for r in requests]}
+    if ws.category_checks:
+        content["category_checks"] = ws.category_checks
     messages = [*ws.messages, await emit(deps, AGENT, "supervisor", "result", content, summary or "Outreach step done.")]
     update = {"outreach": ws.threads, "proposals": ws.proposals, "messages": messages, "errors": errors,
-              "phase": next_phase(ws)}
+              "phase": next_phase(ws), "feedback": ws.feedback}
     if ws.send_approved():
         update["pending_approval"] = None  # the approval is consumed by this send
     return update

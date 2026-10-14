@@ -20,8 +20,16 @@ services:
       - key: AUTH_DISABLED
         value: "false"
       - key: NUDGE_AFTER_DAYS
-        value: "3"
+        value: "0"  # demo setting: silent threads can be nudged on the next poll; use "3" in real use
+      - key: CLEF_MODEL
+        value: clef-flash
+      - key: CLEF_ENABLED
+        value: "true"
       - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
         sync: false
       - key: SUPABASE_URL
         sync: false

@@ -1,4 +1,4 @@
-"""Shared fixtures. Tests never touch the network: FakeLLM, fake tools and MemoryDB only."""
+"""Shared fixtures. Tests never touch the network: FakeLLM, FakeClef, fake tools and MemoryDB only."""
 
 import pytest
 
@@ -6,6 +6,7 @@ from app.core.config import Settings
 from app.core.db import MemoryDB
 from app.core.trace import Tracer
 from app.graph.deps import Deps
+from tests.fakes import rule_clef
 
 
 @pytest.fixture
@@ -33,6 +34,7 @@ def make_deps(db, tracer, settings, tmp_path):
 
     def _make(llm, **tools) -> Deps:
         storage = tools.pop("storage", Storage(settings, local_dir=tmp_path / "storage"))
+        tools.setdefault("clef", rule_clef())  # same answers as the old L6/L7 rules
         return Deps(llm=llm, db=db, tracer=tracer, settings=settings, storage=storage, run_id="run-test", **tools)
 
     return _make

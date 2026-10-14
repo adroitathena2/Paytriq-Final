@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.api import approvals, events, runs, trace
 from app.api.common import Services
+from app.core.clef import build_clef
 from app.core.config import Settings, get_settings
 from app.core.db import build_db
 from app.core.llm import build_llm
@@ -35,7 +36,7 @@ def build_deps(settings: Settings, db) -> Deps:
     return Deps(
         llm=llm, db=db, tracer=tracer, settings=settings, storage=storage, vision=VisionTool(llm, storage),
         places=PlacesTool(settings.google_maps_api_key, settings.overpass_url), pdf=PdfTool(storage),
-        gmail=GmailTool(settings),
+        gmail=GmailTool(settings), clef=build_clef(settings),
     )
 
 
@@ -77,6 +78,7 @@ def create_app(services: Services | None = None) -> FastAPI:
     async def health():
         s = get_settings()
         return {"status": "ok", "demo_mode": s.demo_mode, "llm_configured": bool(s.gemini_api_key),
+                "clef_configured": bool(s.clef_enabled and s.cloudflare_account_id and s.cloudflare_api_token),
                 "database": "postgres" if s.database_url else "memory"}
 
     @app.get("/files/{bucket}/{path:path}")

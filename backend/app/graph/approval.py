@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from langgraph.types import interrupt
 
+from app.agents import roi_audit
 from app.graph.messages import emit, open_requests
 from app.graph.state import EventState
 
@@ -47,7 +48,8 @@ async def _shortlist(state: EventState, deps, decision: str, edits: dict) -> dic
     if decision == "approve":
         known = {b.id for b in state.get("brands", [])}
         chosen = [b for b in edits.get("selected_brand_ids") or payload.get("suggested_brand_ids", []) if b in known]
-        return {"selected_brand_ids": chosen, "phase": "proposals", "pending_approval": None, "messages": []}
+        return {"selected_brand_ids": chosen, "target_brand_count": len(chosen), "phase": "proposals",
+                "pending_approval": None, "messages": []}
     feedback = edits.get("feedback") or "Organizer rejected the shortlist without a comment."
     msg = await emit(deps, "human", "discovery", "request", {"reason": "human_feedback", "feedback": feedback},
                      "Organizer wants a different shortlist.")
@@ -91,6 +93,9 @@ async def _send(state: EventState, deps, decision: str, edits: dict) -> dict:
 async def _roi(state: EventState, deps, decision: str, edits: dict) -> dict:
     report = dict(state.get("roi_report") or {})
     if decision == "approve":
-        report.update(published=True, organizer_note=edits.get("note"))
-        return {"roi_report": report, "phase": "done", "pending_approval": None, "messages": []}
+        report.update(published=True, organizer_note=edits.get("note"),
+                      published_with_gaps=bool(report.get("disclosed_gaps")))
+        # L8: only an approved report calibrates future reach estimates
+        messages = await roi_audit.commit_calibration(deps, report)
+        return {"roi_report": report, "phase": "done", "pending_approval": None, "messages": messages}
     return {"phase": "awaiting_evidence", "pending_approval": None, "messages": []}

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import ActivityTimeline from "../components/ActivityTimeline";
+import { DemoBanner } from "../components/Banners";
+import RunGraph from "../components/RunGraph";
 import Stepper from "../components/Stepper";
-import { Badge, Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Spinner, StatusBadge } from "../components/ui";
+import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Spinner, StatusBadge } from "../components/ui";
 import { api } from "../lib/api";
-import { agentLabel, phaseLabel, stepForPhase, when, type Step } from "../lib/format";
-import type { EventRow, Gate, RunDetail } from "../lib/types";
+import { agentLabel, phaseLabel, stepForPhase, type Step } from "../lib/format";
+import { isRehearsal } from "../lib/loops";
+import type { DemoScenario, EventRow, Gate, RunDetail, TraceEntry } from "../lib/types";
 import Brands from "./Brands";
 import Outreach from "./Outreach";
 import Proposals from "./Proposals";
@@ -15,6 +19,7 @@ export interface StepProps {
   detail: RunDetail;
   busy: boolean;
   act: (fn: () => Promise<unknown>) => Promise<void>;
+  demoScenario?: DemoScenario | null;
 }
 
 const GATE_STEP: Record<Gate, Step> = { shortlist: "discover", send: "proposals", roi_publish: "roi" };
@@ -24,6 +29,7 @@ export default function EventsDetail() {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [detail, setDetail] = useState<RunDetail | null>(null);
+  const [trace, setTrace] = useState<TraceEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,6 +54,8 @@ export default function EventsDetail() {
     } catch (e) {
       setActionError((e as Error).message);
     }
+    // The activity timeline and graph read the stored trace, so they survive a page refresh.
+    api.trace(runId).then(setTrace).catch(() => undefined);
   }, [runId]);
 
   const status = detail?.run.status;
@@ -82,7 +90,7 @@ export default function EventsDetail() {
   const current = stepForPhase(detail?.values.phase);
   const waiting = detail?.interrupt ? GATE_STEP[detail.interrupt.gate] : null;
   const shown = selected ?? waiting ?? current;
-  const stepProps = runId && detail ? { runId, detail, busy, act } : null;
+  const stepProps = runId && detail ? { runId, detail, busy, act, demoScenario: event.demo_scenario } : null;
 
   return (
     <>
@@ -91,6 +99,13 @@ export default function EventsDetail() {
         subtitle={subtitle}
         action={runId && <Link to={`/trace/${runId}`} className="text-sm font-medium text-indigo-700 hover:underline">View agent trace</Link>}
       />
+
+      {(event.demo_scenario || trace.some(isRehearsal)) && (
+        <div className="mb-6">
+          {/* the trace flag also catches rehearsal runs whose event row lacks demo_scenario */}
+          <DemoBanner scenario={trace.some(isRehearsal) ? "rehearsal" : event.demo_scenario} />
+        </div>
+      )}
 
       {!runId && (
         <EmptyState
@@ -115,7 +130,10 @@ export default function EventsDetail() {
           {shown === "proposals" && <Proposals {...stepProps} />}
           {shown === "outreach" && <Outreach {...stepProps} />}
           {shown === "roi" && <RoiStep {...stepProps} />}
-          <RecentActivity detail={stepProps.detail} runId={stepProps.runId} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <ActivityTimeline entries={trace} runId={stepProps.runId} />
+            <RunGraph entries={trace} />
+          </div>
         </div>
       )}
     </>
@@ -143,35 +161,6 @@ function StatusBar({ runId, detail, busy, act }: StepProps) {
           </Button>
         </>
       )}
-    </Card>
-  );
-}
-
-function RecentActivity({ detail, runId }: { detail: RunDetail; runId: string }) {
-  const messages = (detail.values.messages ?? []).slice(-6).reverse();
-  if (!messages.length) return null;
-  return (
-    <Card>
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-        <h3 className="text-sm font-semibold">Recent agent activity</h3>
-        <Link to={`/trace/${runId}`} className="text-sm text-indigo-700 hover:underline">
-          Full trace
-        </Link>
-      </div>
-      <ul className="divide-y divide-slate-100">
-        {messages.map((m) => (
-          <li key={m.id} className="flex items-start gap-3 px-5 py-2.5 text-sm">
-            <span className="w-40 shrink-0 text-slate-500">
-              {agentLabel(m.from_agent)} &rarr; {agentLabel(m.to_agent)}
-            </span>
-            <Badge tone={["revision_request", "replan", "escalation"].includes(m.type) ? "accent" : "neutral"}>
-              {m.type.replace(/_/g, " ")}
-            </Badge>
-            <span className="min-w-0 flex-1 text-slate-700">{m.reasoning}</span>
-            <span className="shrink-0 text-xs text-slate-400">{when(m.ts)}</span>
-          </li>
-        ))}
-      </ul>
     </Card>
   );
 }

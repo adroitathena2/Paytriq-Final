@@ -32,6 +32,11 @@ class Database(Protocol):
     async def list_trace(self, run_id: str) -> list[dict]: ...
     async def add_evidence(self, run_id: str, data: dict) -> dict: ...
     async def list_evidence(self, run_id: str) -> list[dict]: ...
+    async def add_deal(self, owner_id: str, data: dict) -> dict: ...
+    async def list_deals(self, owner_id: str, category: str) -> list[dict]: ...
+    async def delete_deals(self, owner_id: str, brand_prefix: str) -> None: ...
+    async def get_calibration(self, owner_id: str, category: str) -> dict | None: ...
+    async def save_calibration(self, owner_id: str, category: str, factor: float) -> dict: ...
     async def close(self) -> None: ...
 
 
@@ -41,6 +46,8 @@ class MemoryDB:
         self.runs: dict[str, dict] = {}
         self.trace: list[dict] = []
         self.evidence: list[dict] = []
+        self.deals: list[dict] = []
+        self.calibration: dict[tuple[str, str], dict] = {}
 
     async def create_event(self, owner_id: str, data: dict) -> dict:
         event = {"id": str(uuid.uuid4()), "owner_id": owner_id, "created_at": _now(), **data}
@@ -95,12 +102,39 @@ class MemoryDB:
     async def list_evidence(self, run_id: str) -> list[dict]:
         return [e for e in self.evidence if e["run_id"] == run_id]
 
+    async def add_deal(self, owner_id: str, data: dict) -> dict:
+        row = {"id": str(uuid.uuid4()), "owner_id": owner_id, "accepted_at": _now(),
+               **{c: data.get(c) for c in DEAL_COLUMNS}}
+        self.deals.append(row)
+        return row
+
+    async def list_deals(self, owner_id: str, category: str) -> list[dict]:
+        return [d for d in self.deals if d["owner_id"] == owner_id and d["category"] == category]
+
+    async def delete_deals(self, owner_id: str, brand_prefix: str) -> None:
+        self.deals = [d for d in self.deals
+                      if not (d["owner_id"] == owner_id and d["brand_id"].startswith(brand_prefix))]
+
+    async def get_calibration(self, owner_id: str, category: str) -> dict | None:
+        return self.calibration.get((owner_id, category))
+
+    async def save_calibration(self, owner_id: str, category: str, factor: float) -> dict:
+        """Running average: the new event counts as one more observation."""
+        old = self.calibration.get((owner_id, category))
+        n = old["n_events"] + 1 if old else 1
+        avg = (old["factor"] * old["n_events"] + factor) / n if old else factor
+        row = {"owner_id": owner_id, "category": category, "factor": avg, "n_events": n, "updated_at": _now()}
+        self.calibration[(owner_id, category)] = row
+        return row
+
     async def close(self) -> None:
         return None
 
 
-EVENT_COLUMNS = ("name", "college", "event_date", "expected_footfall", "audience", "budget_goal_inr", "lat", "lng")
+EVENT_COLUMNS = ("name", "college", "event_date", "expected_footfall", "audience", "budget_goal_inr", "lat", "lng",
+                 "demo_scenario")
 EVIDENCE_COLUMNS = ("brand_id", "kind", "url", "storage_path", "mime_type", "note")
+DEAL_COLUMNS = ("event_id", "brand_id", "category", "tier", "price_inr")
 
 
 class PostgresDB:
@@ -193,6 +227,41 @@ class PostgresDB:
     async def list_evidence(self, run_id: str) -> list[dict]:
         rows = await self._fetch("select * from evidence where run_id = %s order by created_at", (run_id,))
         return [_jsonable(r) for r in rows]
+
+    async def add_deal(self, owner_id: str, data: dict) -> dict:
+        cols = ", ".join(DEAL_COLUMNS)
+        marks = ", ".join(["%s"] * (len(DEAL_COLUMNS) + 1))
+        rows = await self._fetch(
+            f"insert into sponsor_deals (owner_id, {cols}) values ({marks}) returning *",
+            (owner_id, *[data.get(c) for c in DEAL_COLUMNS]),
+        )
+        return _jsonable(rows[0])
+
+    async def list_deals(self, owner_id: str, category: str) -> list[dict]:
+        rows = await self._fetch(
+            "select * from sponsor_deals where owner_id = %s and category = %s order by accepted_at",
+            (owner_id, category))
+        return [_jsonable(r) for r in rows]
+
+    async def delete_deals(self, owner_id: str, brand_prefix: str) -> None:
+        await self._fetch("delete from sponsor_deals where owner_id = %s and brand_id like %s",
+                          (owner_id, brand_prefix.replace("%", r"\%").replace("_", r"\_") + "%"))
+
+    async def get_calibration(self, owner_id: str, category: str) -> dict | None:
+        rows = await self._fetch("select * from reach_calibration where owner_id = %s and category = %s",
+                                 (owner_id, category))
+        return _jsonable(rows[0]) if rows else None
+
+    async def save_calibration(self, owner_id: str, category: str, factor: float) -> dict:
+        """Running average: the new event counts as one more observation."""
+        rows = await self._fetch(
+            "insert into reach_calibration (owner_id, category, factor, n_events) values (%s, %s, %s, 1) "
+            "on conflict (owner_id, category) do update set "
+            "factor = (reach_calibration.factor * reach_calibration.n_events + excluded.factor) "
+            "/ (reach_calibration.n_events + 1), "
+            "n_events = reach_calibration.n_events + 1, updated_at = now() returning *",
+            (owner_id, category, factor))
+        return _jsonable(rows[0])
 
     async def close(self) -> None:
         await self.pool.close()

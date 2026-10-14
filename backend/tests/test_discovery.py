@@ -1,4 +1,4 @@
-"""Discovery & Ranking agent: normal pass, L1 self-replan, tool failure, and L4 replacement."""
+"""Discovery & Ranking agent: normal pass, L1 self-replan, tool failure, L4 replacement, L6 category feedback."""
 
 from app.agents import discovery
 from app.core.llm import FakeLLM, LLMError
@@ -107,8 +107,61 @@ async def test_replacement_picks_next_best_unused_brand(make_deps):
     update = await discovery.run(s, make_deps(llm(), places=FakePlaces(lambda r, c: [])))
     assert update["selected_brand_ids"] == ["b1", "b2", "b3"]
     result = update["messages"][-1]
-    assert result.content == {"replacement_for": "b1", "brand_id": "b3", "in_reply_to": [request.id]}
+    assert result.content == {"replacement_for": "b1", "brand_id": "b3", "reason": "replacement",
+                              "in_reply_to": [request.id]}
     assert update["phase"] == "proposals"
+
+
+async def test_each_open_replacement_request_gets_its_own_brand(make_deps):
+    """Regression (A4): two declines at once used to get one replacement and both were marked answered."""
+    first = new_message("outreach", "discovery", "request", {"reason": "replacement", "brand_id": "b1"}, "declined")
+    second = new_message("outreach", "discovery", "request", {"reason": "replacement", "brand_id": "b2"}, "bounced")
+    feedback = new_message("human", "discovery", "request", {"reason": "human_feedback", "feedback": "more gyms"}, "x")
+    s = state(brands=[brand(i, 0.9 - i / 20) for i in range(1, 6)], selected_brand_ids=["b1", "b2"],
+              messages=[first, second, feedback], phase="replies")
+    update = await discovery.run(s, make_deps(llm(), places=FakePlaces(lambda r, c: [])))
+    results = [m for m in update["messages"] if m.type == "result"]
+    assert [(m.content["replacement_for"], m.content["in_reply_to"]) for m in results] == [
+        ("b1", [first.id]), ("b2", [second.id])]
+    assert results[0].content["brand_id"] != results[1].content["brand_id"]
+    assert update["selected_brand_ids"] == ["b1", "b2", "b3", "b4"]
+    answered = {i for m in update["messages"] for i in m.content.get("in_reply_to", [])}
+    assert feedback.id not in answered  # unrelated requests stay open for the next turn
+
+
+async def test_infeasible_brand_from_proposal_is_replaced(make_deps):
+    """L7 (Discovery side): Proposal's infeasible request is answered with a replacement."""
+    request = new_message("proposal", "discovery", "request",
+                          {"reason": "infeasible", "brand_id": "b1", "why": "wholesaler"}, "no fit")
+    s = state(brands=[brand(1, 0.9, category="wholesale"), brand(2, 0.8)], selected_brand_ids=["b1"],
+              messages=[request], phase="replacement")
+    update = await discovery.run(s, make_deps(llm(), places=FakePlaces(lambda r, c: [])))
+    result = update["messages"][-1]
+    assert (result.content["reason"], result.content["brand_id"], result.content["in_reply_to"]) == (
+        "infeasible", "b2", [request.id])
+    assert update["selected_brand_ids"] == ["b1", "b2"]
+
+
+async def test_category_feedback_penalises_and_replaces_from_other_categories(make_deps):
+    """L6: two gym declines -> gyms x0.6, logged -> replacements and top-up come from other categories."""
+    gyms = [brand(i, 0.9, category="gym") for i in (1, 2, 3)]
+    others = [brand(4, 0.8, category="cafe"), brand(5, 0.75, category="coaching"), brand(6, 0.7, category="salon")]
+    declines = [new_message("outreach", "discovery", "request", {"reason": "replacement", "brand_id": b}, "declined")
+                for b in ("b1", "b2")]
+    category = new_message("outreach", "discovery", "request", {
+        "reason": "category_feedback", "category": "gym", "negative": 2,
+        "evidence": [{"brand_id": "b1", "outcome": "declined"}, {"brand_id": "b2", "outcome": "declined"}]}, "2 gyms")
+    s = state(brands=gyms + others, selected_brand_ids=["b1", "b2", "b4"], target_brand_count=3,
+              messages=[*declines, category], phase="replies")
+    update = await discovery.run(s, make_deps(llm(), places=FakePlaces(lambda r, c: [])))
+
+    [penalty] = [m for m in update["messages"] if m.content.get("reason") == "category_penalty"]
+    assert (penalty.content["category"], penalty.content["factor"], penalty.content["rescored"]) == ("gym", 0.6, 3)
+    assert next(b for b in update["brands"] if b.id == "b3").fit_score == 0.54
+    new = update["selected_brand_ids"][3:]
+    assert new and all(b in ("b5", "b6") for b in new)  # never the third gym
+    answered = {i for m in update["messages"] for i in m.content.get("in_reply_to", [])}
+    assert {declines[0].id, declines[1].id, category.id} <= answered
 
 
 async def test_replacement_falls_back_when_llm_is_down(make_deps):
