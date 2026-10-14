@@ -1,13 +1,22 @@
-# CODEOWNERS — who reviews what.
-#
-# TODO(team): replace the placeholders below with the 4 real GitHub usernames
-# (one per member, including examstudiobot) before the final submission.
-# GitHub only notifies real usernames; placeholder handles are ignored.
-# Example:
-#   * @examstudiobot @member2 @member3 @member4
-* @examstudiobot
-/docs/ @examstudiobot
-/decision/ @examstudiobot
-/graph/ @examstudiobot
-/api/ @examstudiobot
-/frontend/ @examstudiobot
+# CODEOWNERS — who reviews what
+* @adroitathena2
+/core/ @aryan20s
+/decision/ @aryan20s
+/docs/CLEF.md @aryan20s
+/agents/a1_discovery.py @aryan20s
+/agents/a2_pricing.py @aryan20s
+/agents/a3_outreach.py @adroitathena2
+/agents/a4_contract.py @adroitathena2
+/tools/ @adroitathena2
+/agents/a5_compliance.py @BeTechSavvy
+/agents/a6_audit.py @BeTechSavvy
+/agents/a7_arbiter.py @BeTechSavvy
+/blackboard/ @BeTechSavvy
+/graph/ @BeTechSavvy
+/observability/ @BeTechSavvy
+/api/ @mlllemmmm
+/frontend/ @mlllemmmm
+/eval/ @mlllemmmm
+/scripts/ @mlllemmmm
+/docs/ @mlllemmmm
+/tests/ @mlllemmmm
