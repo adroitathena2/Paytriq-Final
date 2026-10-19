@@ -229,23 +229,22 @@ Running the demo:
 
 ## Demo script (60 seconds)
 
-Numbers in `[[...]]` are read from the committed real trace with `python backend/scripts/verify_trace.py
-traces/<file>.json`; never use numbers from a rehearsal run. If a loop or rule did not fire in the real trace
-(A1 and L2 depend on Gemini's own ranking and critique; L6 and L7 on Clef's judgement), drop that sentence rather
-than claim it.
+Numbers below are read from the committed real trace with `python backend/scripts/verify_trace.py
+traces/2026-10-19-demo-mode-full-run.json`; never use numbers from a rehearsal run. If a loop or rule did not fire in
+the real trace (A1 and L2 depend on Gemini's own ranking and critique; L6 and L7 on Clef's judgement), drop that
+sentence rather than claim it. In this run L1, L2 and L6 did not fire, so they are left out.
 
-> "The reviewer asked for an example of one agent's output changing what another does. Here are eight loops and
-> three conflicts the supervisor arbitrates.
-> On this real demo-mode run with Gemini, Discovery found only [[N good fits at 2 km]] good fits and replanned
-> itself (L1). Proposal refused to pitch a wholesaler and sent it back to Discovery (L7). The supervisor capped
-> Apex Coaching from Rs [[A2 original price]] to Rs [[A2 cap]] because past coaching deals had a median of
-> Rs [[A2 median]] (A2). Outreach critiqued [[N L2]] proposals and Proposal rewrote them (L2).
-> After sending: Bean Theory said 'Rs 8,000 max' and Proposal wrote a cheaper version (L3); [[N L4]] brands
-> declined or bounced and Discovery replaced each one (L4); the bounce on our top-ranked cafe overrode Discovery's
-> ranking (A1); two gyms said no, so Discovery down-weighted gyms and picked other categories (L6).
+> "The reviewer asked for an example of one agent's output changing what another does. Paytriq has eight loops
+> and three conflicts the supervisor arbitrates; this real run shows five of the loops and all three rules.
+> On this real demo-mode run with Gemini, the supervisor capped Apex Coaching from Rs 48,000 to Rs 12,500 because
+> past coaching deals had a median of Rs 10,000 (A2).
+> After sending: Bean Theory said 'Rs 8,000 max' and Proposal wrote a cheaper version (L3); our top-ranked cafe
+> bounced and Discovery replaced it (L4); the bounce overrode Discovery's ranking (A1). The replacement was a
+> wholesaler, so Proposal refused to pitch it and sent it back to Discovery (L7), which found Crumbs Bakery.
 > After the event, one photo was missing: ROI Audit asked for it (L5) and the supervisor blocked publishing until
-> we chose to publish with the gap disclosed (A3). That approval saved a reach factor of [[L8 factor]] that the next
-> proposal uses (L8). All [[N decision_log entries]] supervisor decisions are in this exported trace, unedited."
+> we chose to publish with the gap disclosed (A3). That approval saved a reach factor for the next proposals (L8);
+> here it is 0.0, because Gemini Vision marked all the generated demo photos ambiguous, so no deliverable counted
+> as verified. All 33 decision_log entries are in this exported trace, unedited."
 
 ## Team
 
