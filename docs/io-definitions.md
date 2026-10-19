@@ -180,15 +180,12 @@ How each coordination loop and arbitration rule appears in `messages` and in the
 
 ### Sample output provenance
 
-> **[[TO FILL after the deployed demo-mode run (B5); do not fill from memory]]**
+> Sample output provenance
 > `sample_output.json` is the real `GET /runs/{run_id}` response captured from the deployed system at the end of the
 > run whose trace is committed in [`/traces`](../traces).
 >
-> - run_id: `[[RUN_ID]]`
-> - date: `[[YYYY-MM-DD]]`
-> - deployed API URL: `[[https://<api>.onrender.com]]`
+> - run_id: `e160d171-213f-4076-b9c5-dab56e7c04d2`
+> - date: `2026-10-19`
+> - deployed API URL: `https://paytriq-api.onrender.com`
 > - model: `gemini-flash-latest`
 > - demo mode: fixture businesses and inbox, real Gemini reasoning
->
-> Until it is replaced, `sample_output.json` still holds a response produced by the offline integration test with
-> scripted fakes (its `_provenance` field says so); it shows the shape only.

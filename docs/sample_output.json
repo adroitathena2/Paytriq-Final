@@ -1,651 +1,2664 @@
 {
-  "_provenance": "Produced by backend/tests/test_integration.py with scripted fakes (FakeLLM, fake Places and Gmail), NOT by Gemini. It shows the exact output schema of GET /runs/{run_id}. Replace with a response captured from the deployed system before submission.",
-  "run": {
-    "id": "a1381cfd-126b-4888-837a-9c98d3344151",
-    "event_id": "event-1",
-    "owner_id": "user-1",
-    "status": "completed",
-    "phase": "done",
-    "pending_gate": null,
-    "last_error": null,
-    "created_at": "2026-10-11T14:46:54.737686+00:00",
-    "updated_at": "2026-10-11T14:46:54.854250+00:00"
+ "_provenance": "Real GET /runs/{run_id} response captured from the deployed system (https://paytriq-api.onrender.com) on 2026-10-19, run_id e160d171-213f-4076-b9c5-dab56e7c04d2, model gemini-flash-latest, demo mode (fixture businesses and inbox, real Gemini reasoning). Trace: traces/2026-10-19-demo-mode-full-run.json.",
+ "run": {
+  "id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+  "event_id": "e1575cc1-c4f0-4f37-ab3a-bb7f89072075",
+  "owner_id": "5344df3f-16f0-4fee-858a-3751c6e622a8",
+  "status": "completed",
+  "phase": "done",
+  "pending_gate": null,
+  "last_error": null,
+  "created_at": "2026-10-18T21:01:42.487324+00:00",
+  "updated_at": "2026-10-18T21:25:34.987785+00:00"
+ },
+ "values": {
+  "event_id": "e1575cc1-c4f0-4f37-ab3a-bb7f89072075",
+  "event": {
+   "name": "Fergusson Fest 2026",
+   "college": "Fergusson College, Pune",
+   "date": "2026-12-12",
+   "expected_footfall": 1800,
+   "audience": "18-22 year old arts, science and commerce students; many live in nearby PGs and hostels",
+   "budget_goal_inr": 120000,
+   "lat": 18.5236,
+   "lng": 73.8394,
+   "demo_scenario": "demo"
   },
-  "values": {
-    "event_id": "event-1",
-    "event": {
-      "name": "TechFest 2026",
-      "college": "SIT Pune",
-      "date": "2026-11-20",
-      "expected_footfall": 1500,
-      "audience": "18-22 year old engineering students",
-      "budget_goal_inr": 150000,
-      "lat": 18.5204,
-      "lng": 73.8567
-    },
-    "brands": [
-      {
-        "id": "good-brew-cafe",
-        "name": "Good Brew Cafe",
-        "category": "cafe",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 0.4,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.85,
-        "fit_reason": "fits students"
-      },
-      {
-        "id": "good-grind-cafe",
-        "name": "Good Grind Cafe",
-        "category": "cafe",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 0.8,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.85,
-        "fit_reason": "fits students"
-      },
-      {
-        "id": "good-fit-gym",
-        "name": "Good Fit Gym",
-        "category": "gym",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 3.1,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.85,
-        "fit_reason": "fits students"
-      },
-      {
-        "id": "good-bakes",
-        "name": "Good Bakes",
-        "category": "bakery",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 3.5,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.85,
-        "fit_reason": "fits students"
-      },
-      {
-        "id": "good-crumbs",
-        "name": "Good Crumbs",
-        "category": "bakery",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 3.9,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.85,
-        "fit_reason": "fits students"
-      },
-      {
-        "id": "meh-gym",
-        "name": "Meh Gym",
-        "category": "gym",
-        "address": "FC Road",
-        "lat": 18.52,
-        "lng": 73.85,
-        "distance_km": 1.2,
-        "contact_email": "owner@shop.in",
-        "website": null,
-        "fit_score": 0.3,
-        "fit_reason": "weak overlap"
-      }
-    ],
-    "selected_brand_ids": [
-      "good-brew-cafe",
-      "good-grind-cafe",
-      "good-fit-gym",
-      "good-bakes"
-    ],
-    "proposals": {
-      "good-brew-cafe": {
-        "brand_id": "good-brew-cafe",
-        "version": 3,
-        "tiers": [
-          {
-            "name": "Bronze",
-            "price_inr": 4500,
-            "deliverables": [
-              "Logo on posters"
-            ],
-            "expected_reach": 450
-          },
-          {
-            "name": "Silver",
-            "price_inr": 9000,
-            "deliverables": [
-              "Logo on posters",
-              "Stall"
-            ],
-            "expected_reach": 830
-          },
-          {
-            "name": "Gold",
-            "price_inr": 15000,
-            "deliverables": [
-              "Logo on main stage banner",
-              "Stall",
-              "1 Instagram post"
-            ],
-            "expected_reach": 2480
-          }
-        ],
-        "pitch": "Good Brew Cafe meets 1500 students.",
-        "pdf_url": "https://files.test/good-brew-cafe-v3.pdf",
-        "status": "sent"
-      },
-      "good-grind-cafe": {
-        "brand_id": "good-grind-cafe",
-        "version": 2,
-        "tiers": [
-          {
-            "name": "Bronze",
-            "price_inr": 6000,
-            "deliverables": [
-              "Logo on posters"
-            ],
-            "expected_reach": 450
-          },
-          {
-            "name": "Silver",
-            "price_inr": 12000,
-            "deliverables": [
-              "Logo on posters",
-              "Stall"
-            ],
-            "expected_reach": 830
-          },
-          {
-            "name": "Gold",
-            "price_inr": 20000,
-            "deliverables": [
-              "Logo on main stage banner",
-              "Stall",
-              "1 Instagram post"
-            ],
-            "expected_reach": 2480
-          }
-        ],
-        "pitch": "Good Grind Cafe meets 1500 students.",
-        "pdf_url": "https://files.test/good-grind-cafe-v2.pdf",
-        "status": "declined"
-      },
-      "good-fit-gym": {
-        "brand_id": "good-fit-gym",
-        "version": 2,
-        "tiers": [
-          {
-            "name": "Bronze",
-            "price_inr": 6000,
-            "deliverables": [
-              "Logo on posters"
-            ],
-            "expected_reach": 450
-          },
-          {
-            "name": "Silver",
-            "price_inr": 12000,
-            "deliverables": [
-              "Logo on posters",
-              "Stall"
-            ],
-            "expected_reach": 830
-          },
-          {
-            "name": "Gold",
-            "price_inr": 20000,
-            "deliverables": [
-              "Logo on main stage banner",
-              "Stall",
-              "1 Instagram post"
-            ],
-            "expected_reach": 2480
-          }
-        ],
-        "pitch": "Good Fit Gym meets 1500 students.",
-        "pdf_url": "https://files.test/good-fit-gym-v2.pdf",
-        "status": "accepted"
-      },
-      "good-bakes": {
-        "brand_id": "good-bakes",
-        "version": 1,
-        "tiers": [
-          {
-            "name": "Bronze",
-            "price_inr": 4500,
-            "deliverables": [
-              "Logo on posters"
-            ],
-            "expected_reach": 450
-          },
-          {
-            "name": "Silver",
-            "price_inr": 9000,
-            "deliverables": [
-              "Logo on posters",
-              "Stall"
-            ],
-            "expected_reach": 830
-          },
-          {
-            "name": "Gold",
-            "price_inr": 15000,
-            "deliverables": [
-              "Logo on main stage banner",
-              "Stall",
-              "1 Instagram post"
-            ],
-            "expected_reach": 2480
-          }
-        ],
-        "pitch": "Good Bakes meets 1500 students.",
-        "pdf_url": "https://files.test/good-bakes-v1.pdf",
-        "status": "sent"
-      }
-    },
-    "outreach": {
-      "good-brew-cafe": {
-        "brand_id": "good-brew-cafe",
-        "thread_id": "thread-1",
-        "status": "sent",
-        "last_reply_class": "pushback_price",
-        "history": [
-          {
-            "type": "email_draft",
-            "kind": "initial",
-            "subject": "Sponsor TechFest 2026",
-            "body": "Hi Good Brew Cafe, please see the attached proposal.",
-            "version": 2,
-            "state": "sent",
-            "ts": "2026-10-11T14:46:54.757793+00:00"
-          },
-          {
-            "type": "sent",
-            "kind": "initial",
-            "gmail_message_id": "m-1",
-            "to": "team1@example.com",
-            "redirected_to_demo": true,
-            "subject": "[Paytriq demo -> Good Brew Cafe] Sponsor TechFest 2026",
-            "ts": "2026-10-11T14:46:54.773514+00:00"
-          },
-          {
-            "type": "reply",
-            "gmail_message_id": "r-thread-1-0",
-            "from": "owner@brand.in",
-            "text": "Too expensive for our budget right now.",
-            "bounce": false,
-            "ts": "2026-10-11T14:46:54.795073+00:00",
-            "message_id_header": "<r0@mail>"
-          },
-          {
-            "type": "classified",
-            "brand_id": "good-brew-cafe",
-            "label": "pushback_price",
-            "summary": "price too high",
-            "accepted_tier": null,
-            "constraint": "Keep every tier under Rs 15,000",
-            "max_price_inr": 15000,
-            "ts": "2026-10-11T14:46:54.795073+00:00"
-          },
-          {
-            "type": "email_draft",
-            "kind": "revised",
-            "subject": "Sponsor TechFest 2026",
-            "body": "Hi Good Brew Cafe, please see the attached proposal.",
-            "version": 3,
-            "state": "sent",
-            "ts": "2026-10-11T14:46:54.802082+00:00"
-          },
-          {
-            "type": "sent",
-            "kind": "revised",
-            "gmail_message_id": "m-4",
-            "to": "team1@example.com",
-            "redirected_to_demo": true,
-            "subject": "[Paytriq demo -> Good Brew Cafe] Sponsor TechFest 2026",
-            "ts": "2026-10-11T14:46:54.820082+00:00"
-          }
-        ]
-      },
-      "good-grind-cafe": {
-        "brand_id": "good-grind-cafe",
-        "thread_id": "thread-2",
-        "status": "declined",
-        "last_reply_class": "declined",
-        "history": [
-          {
-            "type": "email_draft",
-            "kind": "initial",
-            "subject": "Sponsor TechFest 2026",
-            "body": "Hi Good Grind Cafe, please see the attached proposal.",
-            "version": 2,
-            "state": "sent",
-            "ts": "2026-10-11T14:46:54.757793+00:00"
-          },
-          {
-            "type": "sent",
-            "kind": "initial",
-            "gmail_message_id": "m-2",
-            "to": "team2@example.com",
-            "redirected_to_demo": true,
-            "subject": "[Paytriq demo -> Good Grind Cafe] Sponsor TechFest 2026",
-            "ts": "2026-10-11T14:46:54.780409+00:00"
-          },
-          {
-            "type": "reply",
-            "gmail_message_id": "r-thread-2-0",
-            "from": "owner@brand.in",
-            "text": "Thanks, but not interested.",
-            "bounce": false,
-            "ts": "2026-10-11T14:46:54.795073+00:00",
-            "message_id_header": "<r0@mail>"
-          },
-          {
-            "type": "classified",
-            "brand_id": "good-grind-cafe",
-            "label": "declined",
-            "summary": "not interested this year",
-            "accepted_tier": null,
-            "constraint": null,
-            "max_price_inr": null,
-            "ts": "2026-10-11T14:46:54.795073+00:00"
-          }
-        ]
-      },
-      "good-fit-gym": {
-        "brand_id": "good-fit-gym",
-        "thread_id": "thread-3",
-        "status": "accepted",
-        "last_reply_class": "accepted",
-        "history": [
-          {
-            "type": "email_draft",
-            "kind": "initial",
-            "subject": "Sponsor TechFest 2026",
-            "body": "Hi Good Fit Gym, please see the attached proposal.",
-            "version": 2,
-            "state": "sent",
-            "ts": "2026-10-11T14:46:54.757793+00:00"
-          },
-          {
-            "type": "sent",
-            "kind": "initial",
-            "gmail_message_id": "m-3",
-            "to": "team1@example.com",
-            "redirected_to_demo": true,
-            "subject": "[Paytriq demo -> Good Fit Gym] Sponsor TechFest 2026",
-            "ts": "2026-10-11T14:46:54.787878+00:00"
-          },
-          {
-            "type": "reply",
-            "gmail_message_id": "r-thread-3-0",
-            "from": "owner@brand.in",
-            "text": "We will go with Gold, see you there!",
-            "bounce": false,
-            "ts": "2026-10-11T14:46:54.795073+00:00",
-            "message_id_header": "<r0@mail>"
-          },
-          {
-            "type": "classified",
-            "brand_id": "good-fit-gym",
-            "label": "accepted",
-            "summary": "accepted Gold",
-            "accepted_tier": "Gold",
-            "constraint": null,
-            "max_price_inr": null,
-            "ts": "2026-10-11T14:46:54.795073+00:00"
-          },
-          {
-            "type": "accepted",
-            "tier": "Gold",
-            "ts": "2026-10-11T14:46:54.795073+00:00"
-          }
-        ]
-      },
-      "good-bakes": {
-        "brand_id": "good-bakes",
-        "thread_id": "thread-5",
-        "status": "sent",
-        "last_reply_class": null,
-        "history": [
-          {
-            "type": "email_draft",
-            "kind": "initial",
-            "subject": "Sponsor TechFest 2026",
-            "body": "Hi Good Bakes, please see the attached proposal.",
-            "version": 1,
-            "state": "sent",
-            "ts": "2026-10-11T14:46:54.802082+00:00"
-          },
-          {
-            "type": "sent",
-            "kind": "initial",
-            "gmail_message_id": "m-5",
-            "to": "team2@example.com",
-            "redirected_to_demo": true,
-            "subject": "[Paytriq demo -> Good Bakes] Sponsor TechFest 2026",
-            "ts": "2026-10-11T14:46:54.828081+00:00"
-          }
-        ]
-      }
-    },
-    "evidence": [
-      {
-        "id": "ev1",
-        "brand_id": "good-fit-gym",
-        "kind": "photo",
-        "storage_path": "a1381cfd-126b-4888-837a-9c98d3344151/banner.jpg",
-        "mime_type": "image/jpeg",
-        "note": "clear: Logo on main stage banner"
-      }
-    ],
-    "roi_report": {
-      "event": {
-        "name": "TechFest 2026",
-        "college": "SIT Pune",
-        "date": "2026-11-20",
-        "expected_footfall": 1500
-      },
-      "generated_at": "2026-10-11T14:46:54.846358+00:00",
-      "sponsors": [
-        {
-          "brand_id": "good-fit-gym",
-          "name": "Good Fit Gym",
-          "tier": "Gold",
-          "price_inr": 20000,
-          "expected_reach": 2480,
-          "deliverables": [
-            "Logo on main stage banner",
-            "Stall",
-            "1 Instagram post"
-          ],
-          "checks": [
-            {
-              "deliverable": "Logo on main stage banner",
-              "status": "verified",
-              "confidence": 0.95,
-              "explanation": "clearly visible",
-              "evidence_ids": [
-                "ev1"
-              ]
-            },
-            {
-              "deliverable": "Stall",
-              "status": "missing",
-              "confidence": 0.9,
-              "explanation": "not shown",
-              "evidence_ids": []
-            },
-            {
-              "deliverable": "1 Instagram post",
-              "status": "missing",
-              "confidence": 0.9,
-              "explanation": "not shown",
-              "evidence_ids": []
-            }
-          ],
-          "delivered": 1,
-          "total": 3,
-          "delivery_rate": 0.33
-        }
+  "brands": [
+   {
+    "id": "demo-bean-theory",
+    "name": "Bean Theory Cafe",
+    "category": "cafe",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 0.6,
+    "contact_email": "hello@bean-theory.invalid",
+    "website": null,
+    "fit_score": 0.9,
+    "fit_reason": "Very close cafe appealing directly to college students for study and socializing with high footfall potential.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-crumbs-bakery",
+    "name": "Crumbs & Co Bakery",
+    "category": "bakery",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 3.1,
+    "contact_email": "hello@crumbs-bakery.invalid",
+    "website": null,
+    "fit_score": 0.85,
+    "fit_reason": "Bakeries are highly popular among nearby PG and hostel students for affordable snacks and hangouts.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-ironcore-gym",
+    "name": "IronCore Gym",
+    "category": "gym",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 0.9,
+    "contact_email": "hello@ironcore-gym.invalid",
+    "website": null,
+    "fit_score": 0.8,
+    "fit_reason": "Under 1 km away and highly relevant for hostel and PG students seeking local gym memberships.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-glow-salon",
+    "name": "Glow Studio Salon",
+    "category": "salon",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 3.4,
+    "contact_email": "hello@glow-salon.invalid",
+    "website": null,
+    "fit_score": 0.75,
+    "fit_reason": "Appeals directly to college-age youth seeking affordable grooming and styling, especially during fest season.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-apex-coaching",
+    "name": "Apex Coaching Classes",
+    "category": "coaching",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 2.8,
+    "contact_email": "hello@apex-coaching.invalid",
+    "website": null,
+    "fit_score": 0.7,
+    "fit_reason": "Relevant educational services for degree students looking for competitive exams, though slightly distant.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-pulsefit-gym",
+    "name": "PulseFit Gym",
+    "category": "gym",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 2.4,
+    "contact_email": "hello@pulsefit-gym.invalid",
+    "website": null,
+    "fit_score": 0.65,
+    "fit_reason": "Relevant fitness offering for students, though somewhat further away facing closer competition.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-metro-wholesale",
+    "name": "Metro Wholesale Traders",
+    "category": "wholesale",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 1.4,
+    "contact_email": "hello@metro-wholesale.invalid",
+    "website": null,
+    "fit_score": 0.15,
+    "fit_reason": "Wholesale B2B business has negligible relevance and interest in direct footfall from undergraduate students.",
+    "unreachable": false
+   },
+   {
+    "id": "demo-chai-junction",
+    "name": "Chai Junction Cafe",
+    "category": "cafe",
+    "address": "Fergusson College Road area, Pune (demo)",
+    "lat": 18.5236,
+    "lng": 73.8394,
+    "distance_km": 0.3,
+    "contact_email": "hello@chai-junction.invalid",
+    "website": null,
+    "fit_score": 0.95,
+    "fit_reason": "Extremely close cafe heavily frequented by local college and PG students seeking casual hangout spots.",
+    "unreachable": true
+   }
+  ],
+  "selected_brand_ids": [
+   "demo-chai-junction",
+   "demo-bean-theory",
+   "demo-ironcore-gym",
+   "demo-apex-coaching",
+   "demo-pulsefit-gym",
+   "demo-metro-wholesale",
+   "demo-crumbs-bakery"
+  ],
+  "proposals": {
+   "demo-chai-junction": {
+    "brand_id": "demo-chai-junction",
+    "version": 1,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 8000,
+      "deliverables": [
+       "Logo placement on all official digital posters shared across student WhatsApp groups",
+       "1 dedicated collaborative Instagram story shoutout on the official @fergussonfest handle",
+       "Distribution of Chai Junction discount vouchers at the main registration and welcome desk"
       ],
-      "overall_delivery_rate": 0.33,
-      "disclosed_gaps": [
-        {
-          "brand_id": "good-fit-gym",
-          "brand_name": "Good Fit Gym",
-          "deliverable": "Stall",
-          "status": "missing",
-          "explanation": "not shown"
-        },
-        {
-          "brand_id": "good-fit-gym",
-          "brand_name": "Good Fit Gym",
-          "deliverable": "1 Instagram post",
-          "status": "missing",
-          "explanation": "not shown"
-        }
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 15000,
+      "deliverables": [
+       "Logo inclusion on the main event stage backdrop banner",
+       "6x6 ft dedicated stall space near the campus amphitheatre for beverage sales and promotional sampling",
+       "1 permanent promotional reel/post on the official @fergussonfest Instagram feed",
+       "Periodic PA system announcements (3 per day) highlighting Chai Junction cafe offers"
       ],
-      "evidence_requests": [
-        "Please upload a clear photo of: Stall",
-        "Please upload a clear photo of: 1 Instagram post"
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 25000,
+      "deliverables": [
+       "Title partner recognition: 'Fergusson Fest 2026 Beverage Partner' across all collateral",
+       "Prime 10x10 ft stall space located directly at high-traffic central plaza walkway",
+       "Standee banner placement at the main campus entrance gate and stage entrance",
+       "Co-branded event wristbands distributed to all 1,800+ attendees with Chai Junction QR discount code",
+       "Exclusive on-stage sponsor mention and certificate presentation during the closing award ceremony"
       ],
-      "summary": "1 of 3 deliverables verified.",
-      "published": true,
-      "organizer_note": null
-    },
-    "messages": [
-      {
-        "id": "ef99b35b026a",
-        "from_agent": "supervisor",
-        "to_agent": "END",
-        "type": "decision",
-        "content": {
-          "next": "END",
-          "gate": null,
-          "source": "llm",
-          "guardrail": null
-        },
-        "reasoning": "phase awaiting_replies",
-        "ts": "2026-10-11T14:46:54.830185Z"
-      },
-      {
-        "id": "2b1183610b87",
-        "from_agent": "human",
-        "to_agent": "roi_audit",
-        "type": "request",
-        "content": {
-          "action": "audit"
-        },
-        "reasoning": "event is over",
-        "ts": "2026-10-11T14:46:54.836083Z"
-      },
-      {
-        "id": "9fba724740b1",
-        "from_agent": "supervisor",
-        "to_agent": "roi_audit",
-        "type": "decision",
-        "content": {
-          "next": "roi_audit",
-          "gate": null,
-          "source": "llm",
-          "guardrail": null
-        },
-        "reasoning": "roi_audit has 1 open request(s)",
-        "ts": "2026-10-11T14:46:54.839034Z"
-      },
-      {
-        "id": "7441b646ad43",
-        "from_agent": "roi_audit",
-        "to_agent": "human",
-        "type": "escalation",
-        "content": {
-          "gaps": 2,
-          "requests": [
-            "Please upload a clear photo of: Stall",
-            "Please upload a clear photo of: 1 Instagram post"
-          ],
-          "overall_delivery_rate": 0.33
-        },
-        "reasoning": "2 deliverable(s) could not be verified; asking for specific evidence instead of guessing.",
-        "ts": "2026-10-11T14:46:54.846358Z"
-      },
-      {
-        "id": "57a6d1643514",
-        "from_agent": "roi_audit",
-        "to_agent": "supervisor",
-        "type": "result",
-        "content": {
-          "overall_delivery_rate": 0.33,
-          "gaps": 2,
-          "in_reply_to": [
-            "2b1183610b87"
-          ]
-        },
-        "reasoning": "1 of 3 deliverables verified.",
-        "ts": "2026-10-11T14:46:54.846358Z"
-      },
-      {
-        "id": "d47cb763c4a9",
-        "from_agent": "supervisor",
-        "to_agent": "human_approval",
-        "type": "decision",
-        "content": {
-          "next": "human_approval",
-          "gate": "roi_publish",
-          "source": "llm",
-          "guardrail": null
-        },
-        "reasoning": "1 of 3 deliverables verified; publish with the gaps disclosed rather than wait",
-        "ts": "2026-10-11T14:46:54.847353Z"
-      },
-      {
-        "id": "00bc4033eef1",
-        "from_agent": "human",
-        "to_agent": "supervisor",
-        "type": "decision",
-        "content": {
-          "gate": "roi_publish",
-          "decision": "approve",
-          "edits": {},
-          "in_reply_to": [
-            "7441b646ad43"
-          ]
-        },
-        "reasoning": "Organizer chose to approve the roi_publish gate.",
-        "ts": "2026-10-11T14:46:54.851344Z"
-      },
-      {
-        "id": "15c9a5aaf31b",
-        "from_agent": "supervisor",
-        "to_agent": "END",
-        "type": "decision",
-        "content": {
-          "next": "END",
-          "gate": null,
-          "source": "llm",
-          "guardrail": null
-        },
-        "reasoning": "phase done",
-        "ts": "2026-10-11T14:46:54.852344Z"
-      }
+      "expected_reach": 1530
+     }
     ],
-    "pending_approval": null,
-    "phase": "done",
-    "step_count": 1,
-    "errors": []
+    "pitch": "Located just 300 meters from Fergusson College on FC Road, Chai Junction Cafe is already the natural daily hangout for students living in nearby PGs and hostels. Sponsoring Fergusson Fest 2026 gives you direct, exclusive access to 1,800+ hungry and beverage-seeking students across arts, science, and commerce. Through on-ground beverage sampling, dedicated food stall presence, and direct coupon distribution, Chai Junction Cafe can cement itself as the top go-to spot for student hangouts, group study sessions, and daily post-lecture tea breaks.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-chai-junction-v1.pdf",
+    "status": "declined",
+    "reach_note": null
+   },
+   "demo-bean-theory": {
+    "brand_id": "demo-bean-theory",
+    "version": 2,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 3000,
+      "deliverables": [
+       "Logo placement on the official festival registration desk banner",
+       "1 dedicated Instagram story shoutout tagging @beantheorycafe on the official fest handle",
+       "Permission to include promotional discount coupons in digital registration packets sent to all participants"
+      ],
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 5000,
+      "deliverables": [
+       "Logo on the official printed event schedule posters displayed across campus",
+       "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+       "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+       "Distribution of Bean Theory discount vouchers directly to all event prize winners"
+      ],
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 8000,
+      "deliverables": [
+       "Co-sponsor logo placement on the main stage backdrop and entrance arch",
+       "Dedicated 6x6 ft sampling or promotional kiosk space in the high-traffic courtyard during fest hours",
+       "2 dedicated Instagram stories and 1 collaborative Reel featuring cafe vibes and student offers",
+       "Two public stage announcements acknowledging Bean Theory Cafe as an official hospitality partner during peak evening events"
+      ],
+      "expected_reach": 2970
+     }
+    ],
+    "pitch": "Situated just 600 meters from campus on FC Road, Bean Theory Cafe has a prime opportunity to become the default daily study spot and hangout destination for Fergusson College's 1,800+ students and hostel residents. Partnering with Fergusson Fest 2026 offers direct, targeted visibility among 18-22 year old coffee lovers looking for their go-to neighborhood cafe, driving immediate footfall on fest days and establishing lasting semester-long customer loyalty at a budget-conscious price point.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-bean-theory-v2.pdf",
+    "status": "accepted",
+    "reach_note": null
+   },
+   "demo-ironcore-gym": {
+    "brand_id": "demo-ironcore-gym",
+    "version": 1,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 12000,
+      "deliverables": [
+       "Logo inclusion on all event registration standees and festival posters across campus",
+       "1 dedicated Instagram story featuring IronCore Gym's student discount pass on the official fest handle",
+       "Flyer distribution within 500 participant registration welcome kits"
+      ],
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 22000,
+      "deliverables": [
+       "All Bronze tier deliverables included",
+       "6x6 ft promotional kiosk space in the high-traffic food and cultural arena",
+       "1 dedicated Instagram collaboration reel showcasing IronCore Gym trainer tips and fest promo",
+       "3 public address sponsor shoutouts during prime cultural and sports competitions"
+      ],
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 35000,
+      "deliverables": [
+       "All Silver tier deliverables included",
+       "Exclusive title sponsorship of the 'IronCore Campus Fitness Challenge' with live on-stage prize distribution",
+       "Prime 10x10 ft canopy stall location next to the main auditorium registration area",
+       "2 standalone Instagram feed posts and pinned highlight on the college fest handle",
+       "Standee placements at both main entry gates and backstage artist lounge"
+      ],
+      "expected_reach": 2970
+     }
+    ],
+    "pitch": "IronCore Gym sits just 900 meters from Fergusson College, making Fergusson Fest 2026 the ultimate platform to directly acquire long-term student memberships. With 1,800 active undergraduates\u2014many residing in nearby FC Road PGs and hostels seeking affordable, walkable fitness options\u2014this partnership delivers high-intent footfall, active student engagement through fitness challenges, and sustained local neighborhood visibility.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-ironcore-gym-v1.pdf",
+    "status": "sent",
+    "reach_note": null
+   },
+   "demo-apex-coaching": {
+    "brand_id": "demo-apex-coaching",
+    "version": 2,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 6000,
+      "deliverables": [
+       "Brand logo featured on printed fest posters across campus notice boards",
+       "1 dedicated shoutout on the official Fergusson Fest Instagram story with handle tag",
+       "Placement of 1 promotional standee (provided by sponsor) at the fest registration desk"
+      ],
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 9000,
+      "deliverables": [
+       "All Bronze tier benefits included",
+       "1 dedicated collaborative Instagram post featuring upcoming competitive exam prep schedules",
+       "Distribution of promotional course brochures directly at the fest registration desk",
+       "2 verbal sponsor acknowledgments by the host from the main stage during daytime events"
+      ],
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 12000,
+      "deliverables": [
+       "All Silver tier benefits included",
+       "Logo placement on the main stage backdrop banner",
+       "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+       "2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships"
+      ],
+      "expected_reach": 1530
+     }
+    ],
+    "pitch": "Fergusson Fest 2026 convenes over 1,800 motivated undergraduate students from arts, science, and commerce streams directly in the FC Road academic hub. Partnering with the fest offers Apex Coaching Classes high-visibility, cost-effective student touchpoints to promote upcoming competitive exam foundation batches and enroll career-focused degree students living in nearby hostels and PGs.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-apex-coaching-v2.pdf",
+    "status": "accepted",
+    "reach_note": null
+   },
+   "demo-pulsefit-gym": {
+    "brand_id": "demo-pulsefit-gym",
+    "version": 1,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 8000,
+      "deliverables": [
+       "Logo placement on all official digital posters shared across student WhatsApp groups",
+       "1 dedicated Instagram story mention with membership discount code on @fergussonfest handle",
+       "Distribution of PulseFit promotional flyers in the registration kits"
+      ],
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 18000,
+      "deliverables": [
+       "Logo on the event main stage backdrop banner",
+       "1 dedicated Instagram feed post and story highlight on the fest handle",
+       "6x6 ft promotional canopy space near the main cafeteria courtyard",
+       "Permission to distribute branded free trial passes during festival peak hours"
+      ],
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 35000,
+      "deliverables": [
+       "Title partner status: 'Fitness Partner of Fergusson Fest 2026' across all marketing collateral",
+       "Prime 10x10 ft stall space next to the registration and main stage entry",
+       "3 dedicated Instagram posts and 1 collaborative Reel featuring fitness challenges",
+       "Host a 15-minute campus fitness contest on the main stage with PulseFit prizes",
+       "Banner display at the college entrance gate for both festival days"
+      ],
+      "expected_reach": 2970
+     }
+    ],
+    "pitch": "PulseFit Gym has a prime opportunity to connect directly with over 1,800 active, health-conscious college students living in hostels and PGs around Fergusson College Road. By partnering with Fergusson Fest 2026, PulseFit Gym can drive semester-long gym memberships, personal training packages, and fitness trial walk-ins right as students plan their fitness routines for the upcoming term.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-pulsefit-gym-v1.pdf",
+    "status": "sent",
+    "reach_note": null
+   },
+   "demo-metro-wholesale": {
+    "brand_id": "demo-metro-wholesale",
+    "version": 1,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 9000,
+      "deliverables": [
+       "Logo on event posters"
+      ],
+      "expected_reach": 540
+     },
+     {
+      "name": "Silver",
+      "price_inr": 18000,
+      "deliverables": [
+       "Logo on event posters",
+       "Stall space at the venue"
+      ],
+      "expected_reach": 990
+     },
+     {
+      "name": "Gold",
+      "price_inr": 30000,
+      "deliverables": [
+       "Logo on the main stage banner",
+       "Stall space at the venue",
+       "1 Instagram post on the event handle"
+      ],
+      "expected_reach": 2970
+     }
+    ],
+    "pitch": "Fergusson Fest 2026 at Fergusson College, Pune brings 1,800 students (18-22 year old arts, science and commerce students; many live in nearby PGs and hostels) to within 1.4 km of Metro Wholesale Traders.",
+    "pdf_url": null,
+    "status": "infeasible",
+    "reach_note": null
+   },
+   "demo-crumbs-bakery": {
+    "brand_id": "demo-crumbs-bakery",
+    "version": 1,
+    "tiers": [
+     {
+      "name": "Bronze",
+      "price_inr": 5000,
+      "deliverables": [
+       "Logo placement on official fest posters distributed across campus",
+       "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+       "Distribution of bakery discount coupons at the event registration counter"
+      ],
+      "expected_reach": 1980
+     },
+     {
+      "name": "Silver",
+      "price_inr": 10000,
+      "deliverables": [
+       "Logo displayed on the main stage backdrop and event schedule brochures",
+       "1 dedicated promotional reel and feed post on the fest Instagram account",
+       "6x6 ft sampling and promotional desk space near the central campus quad",
+       "Public verbal acknowledgments by emcees twice during peak evening cultural events"
+      ],
+      "expected_reach": 2430
+     },
+     {
+      "name": "Gold",
+      "price_inr": 18000,
+      "deliverables": [
+       "Designated as Official Refreshment Partner with prominent logo presence on all digital and physical banners",
+       "Exclusive 10x10 ft stall space near high-traffic food and stage zone",
+       "3 dedicated social media promotions including a bakery highlight reel and story features",
+       "Logo printed on official volunteer and organizing committee lanyards",
+       "Right to distribute branded flyers, menu cards, and loyalty stamp vouchers directly to all attendees"
+      ],
+      "expected_reach": 2970
+     }
+    ],
+    "pitch": "Located right in the Fergusson College Road vicinity, Crumbs & Co Bakery is ideally positioned to become the go-to snacking and hangout spot for our 1,800+ attendees. With the vast majority of our students staying in nearby hostels and PGs across Deccan and FC Road, Fergusson Fest 2026 offers high-converting direct exposure to young, recurring customers seeking daily baked treats, evening study snacks, and weekend cafe meetups.",
+    "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-crumbs-bakery-v1.pdf",
+    "status": "accepted",
+    "reach_note": null
+   }
   },
-  "interrupt": null
+  "outreach": {
+   "demo-chai-junction": {
+    "brand_id": "demo-chai-junction",
+    "thread_id": "thread-demo-chai-junction",
+    "status": "bounced",
+    "last_reply_class": null,
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Sponsorship & Stall Opportunity: Fergusson Fest 2026 x Chai Junction",
+      "body": "Hi Chai Junction team, We are organizing Fergusson Fest 2026 on December 12th, bringing together over 1,800 students from Fergusson College. With your cafe located just 300 meters away on FC Road, Chai Junction is already a natural go-to spot for our campus community. We would love to partner with you to give your team direct visibility among students and local hostel residents through dedicated stall space, voucher distributions, and digital promotions. I have attached our sponsorship deck detailing flexible partnership packages starting from INR 8,000. Would you be open to a quick 5-minute chat this week to explore this? Warm regards, Outreach Team, Fergusson Fest 2026",
+      "version": 1,
+      "state": "sent",
+      "ts": "2026-10-18T21:06:48.464533+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-chai-junction-sent-1",
+      "to": "hello@chai-junction.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> Chai Junction Cafe] Sponsorship & Stall Opportunity: Fergusson Fest 2026 x Chai Junction",
+      "ts": "2026-10-18T21:08:07.449701+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-chai-junction-reply-0",
+      "from": "mailer-daemon@paytriq.invalid",
+      "text": "Delivery failed: address not found.",
+      "bounce": true,
+      "ts": "2026-10-18T21:09:31.595104+00:00"
+     }
+    ]
+   },
+   "demo-bean-theory": {
+    "brand_id": "demo-bean-theory",
+    "thread_id": "thread-demo-bean-theory",
+    "status": "accepted",
+    "last_reply_class": "accepted",
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Partnering with Fergusson Fest 2026 \u2014 Bean Theory Cafe",
+      "body": "Hi Bean Theory team, Fergusson Fest 2026 is taking place on December 12th, gathering 1,800+ college students right here on FC Road. Being just 600m from campus, Bean Theory is a favorite study and hangout space for our students. We would love to feature Bean Theory as an official festival cafe partner. Our collaboration packages offer stall presence for coffee tasting, voucher distribution in registration kits, and campus-wide promotions. Please find the attached proposal outlining options starting at INR 10,000. Could we connect briefly this week to discuss how we can drive more student footfall to your doors? Warm regards, Outreach Team, Fergusson Fest 2026",
+      "version": 1,
+      "state": "sent",
+      "ts": "2026-10-18T21:06:48.464556+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-bean-theory-sent-1",
+      "to": "hello@bean-theory.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> Bean Theory Cafe] Partnering with Fergusson Fest 2026 \u2014 Bean Theory Cafe",
+      "ts": "2026-10-18T21:08:07.500269+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-bean-theory-reply-0",
+      "from": "owner@bean-theory.invalid",
+      "text": "We like the idea, but Rs 8,000 is the max we can spend on this. Could you work with that?",
+      "bounce": false,
+      "ts": "2026-10-18T21:09:31.595145+00:00",
+      "message_id_header": "<demo-bean-theory-reply-0@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-bean-theory",
+      "label": "pushback_price",
+      "summary": "Interested in sponsoring but capped at a maximum budget of Rs 8,000.",
+      "accepted_tier": null,
+      "constraint": "Maximum spend capped at Rs 8,000",
+      "max_price_inr": 8000,
+      "ts": "2026-10-18T21:09:44.232248+00:00"
+     },
+     {
+      "type": "email_draft",
+      "kind": "revised",
+      "subject": "Fergusson Fest 2026 - Sponsorship Confirmation for Bean Theory Cafe",
+      "body": "Hi Bean Theory Team, Thanks for getting back to us! Rs 8,000 works perfectly for our budget. Our Gold tier is set at exactly Rs 8,000, which includes co-sponsor branding on the main stage backdrop, a dedicated 6x6 ft sampling kiosk in the central courtyard, and social media reels reaching our 1,800+ student attendees. We also offer Silver and Bronze packages at Rs 5,000 and Rs 3,000 if you would like to explore lower commitment tiers. The revised proposal is attached for your review. Let us know which option works best, and we will get everything set up!",
+      "version": 2,
+      "state": "sent",
+      "ts": "2026-10-18T21:14:06.363705+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "revised",
+      "gmail_message_id": "demo-bean-theory-sent-2",
+      "to": "hello@bean-theory.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> Bean Theory Cafe] Fergusson Fest 2026 - Sponsorship Confirmation for Bean Theory Cafe",
+      "ts": "2026-10-18T21:15:25.970271+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-bean-theory-reply-1",
+      "from": "owner@bean-theory.invalid",
+      "text": "Rs 8,000 works for us. We will go with Silver - see you at the fest!",
+      "bounce": false,
+      "ts": "2026-10-18T21:16:50.519252+00:00",
+      "message_id_header": "<demo-bean-theory-reply-1@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-bean-theory",
+      "label": "accepted",
+      "summary": "Bean Theory Cafe accepted the sponsorship, opting for the Silver tier.",
+      "accepted_tier": "Silver",
+      "constraint": null,
+      "max_price_inr": 8000,
+      "ts": "2026-10-18T21:17:01.577656+00:00"
+     },
+     {
+      "type": "accepted",
+      "tier": "Silver",
+      "ts": "2026-10-18T21:17:04.973594+00:00"
+     }
+    ]
+   },
+   "demo-ironcore-gym": {
+    "brand_id": "demo-ironcore-gym",
+    "thread_id": "thread-demo-ironcore-gym",
+    "status": "replied",
+    "last_reply_class": "declined",
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Student Membership Partnership: Fergusson Fest 2026 x IronCore Gym",
+      "body": "Hi IronCore Gym team, On December 12th, Fergusson Fest 2026 will host 1,800+ students, many living in nearby FC Road hostels and PGs seeking local fitness memberships. Since your gym is just 900m away, it is the ideal destination for them. We have designed sponsorship packages that give you direct student acquisition channels\u2014including hosting a live campus fitness challenge, promotional kiosks, and student trial passes. Attached is our partnership proposal with packages starting at INR 12,000. Let us know if you would be free for a brief chat to discuss how we can collaborate. Warm regards, Outreach Team, Fergusson Fest 2026",
+      "version": 1,
+      "state": "sent",
+      "ts": "2026-10-18T21:06:48.464564+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-ironcore-gym-sent-1",
+      "to": "hello@ironcore-gym.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> IronCore Gym] Student Membership Partnership: Fergusson Fest 2026 x IronCore Gym",
+      "ts": "2026-10-18T21:08:07.598426+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-ironcore-gym-reply-0",
+      "from": "owner@ironcore-gym.invalid",
+      "text": "Thanks for thinking of us, but we are not interested in sponsoring college events this year.",
+      "bounce": false,
+      "ts": "2026-10-18T21:09:31.595169+00:00",
+      "message_id_header": "<demo-ironcore-gym-reply-0@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-ironcore-gym",
+      "label": "declined",
+      "summary": "Declined sponsorship for college events this year.",
+      "accepted_tier": null,
+      "constraint": null,
+      "max_price_inr": null,
+      "ts": "2026-10-18T21:09:44.232270+00:00"
+     }
+    ]
+   },
+   "demo-apex-coaching": {
+    "brand_id": "demo-apex-coaching",
+    "thread_id": "thread-demo-apex-coaching",
+    "status": "accepted",
+    "last_reply_class": "accepted",
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Fergusson Fest 2026: Student Outreach & Sponsorship Opportunity",
+      "body": "Hi Apex Coaching team, Fergusson Fest 2026 brings together over 1,800 undergraduate arts, science, and commerce students on December 12th. Many of our attendees are actively exploring competitive exam preparation and career guidance. We would love to provide Apex Coaching with a dedicated platform on campus\u2014such as counseling desk presence, brochure distribution at registration, and stage announcements to introduce your upcoming batches. Attached is our updated sponsorship proposal starting at INR 6,000. Would you be open to a quick call this week to see how we can best support your enrollment goals? Warm regards, Outreach Team, Fergusson Fest 2026",
+      "version": 2,
+      "state": "sent",
+      "ts": "2026-10-18T21:06:48.464572+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-apex-coaching-sent-1",
+      "to": "hello@apex-coaching.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> Apex Coaching Classes] Fergusson Fest 2026: Student Outreach & Sponsorship Opportunity",
+      "ts": "2026-10-18T21:08:07.696575+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-apex-coaching-reply-0",
+      "from": "owner@apex-coaching.invalid",
+      "text": "Good proposal. We will go with Gold, please keep our stall near registration.",
+      "bounce": false,
+      "ts": "2026-10-18T21:09:31.595187+00:00",
+      "message_id_header": "<demo-apex-coaching-reply-0@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-apex-coaching",
+      "label": "accepted",
+      "summary": "Accepted Gold tier proposal, requested stall near registration.",
+      "accepted_tier": "Gold",
+      "constraint": "Stall placement near registration",
+      "max_price_inr": null,
+      "ts": "2026-10-18T21:09:44.232280+00:00"
+     },
+     {
+      "type": "accepted",
+      "tier": "Gold",
+      "ts": "2026-10-18T21:09:52.711509+00:00"
+     }
+    ]
+   },
+   "demo-pulsefit-gym": {
+    "brand_id": "demo-pulsefit-gym",
+    "thread_id": "thread-demo-pulsefit-gym",
+    "status": "replied",
+    "last_reply_class": "declined",
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Promoting PulseFit Gym at Fergusson Fest 2026",
+      "body": "Hi PulseFit Gym team, Fergusson College is gearing up for Fergusson Fest 2026 on December 12th, welcoming 1,800+ energetic college students. With so many attendees residing in nearby PGs, it is a great window to capture students planning their fitness routines for the upcoming semester. We would love to collaborate through promotional canopy space, free trial pass distribution, and social media promotions. Attached is our proposal with tiers starting from INR 8,000. Please let us know if you would be open to a short conversation to discuss partnership details. Warm regards, Outreach Team, Fergusson Fest 2026",
+      "version": 1,
+      "state": "sent",
+      "ts": "2026-10-18T21:06:48.464578+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-pulsefit-gym-sent-1",
+      "to": "hello@pulsefit-gym.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> PulseFit Gym] Promoting PulseFit Gym at Fergusson Fest 2026",
+      "ts": "2026-10-18T21:08:07.795271+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-pulsefit-gym-reply-0",
+      "from": "owner@pulsefit-gym.invalid",
+      "text": "Sorry, not interested - our marketing budget already went to a marathon.",
+      "bounce": false,
+      "ts": "2026-10-18T21:09:31.595202+00:00",
+      "message_id_header": "<demo-pulsefit-gym-reply-0@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-pulsefit-gym",
+      "label": "declined",
+      "summary": "Declined because marketing budget has already been spent on a marathon.",
+      "accepted_tier": null,
+      "constraint": null,
+      "max_price_inr": null,
+      "ts": "2026-10-18T21:09:44.232289+00:00"
+     }
+    ]
+   },
+   "demo-crumbs-bakery": {
+    "brand_id": "demo-crumbs-bakery",
+    "thread_id": "thread-demo-crumbs-bakery",
+    "status": "accepted",
+    "last_reply_class": "accepted",
+    "history": [
+     {
+      "type": "email_draft",
+      "kind": "initial",
+      "subject": "Sponsorship Opportunity: Fergusson Fest 2026 & Crumbs & Co Bakery",
+      "body": "Hi Crumbs & Co Team, We are organizing Fergusson Fest 2026 this December at Fergusson College, expecting over 1,800 students\u2014many of whom reside in nearby PGs and hostels on FC Road. We would love to feature Crumbs & Co as a partner to connect your baked treats with our campus crowd. Attached is our concise proposal featuring tier options starting from Rs 5,000, covering on-campus stall presence, voucher distribution, and social media reach. Please take a look at the attached details, and let us know if you would like to collaborate!",
+      "version": 1,
+      "state": "sent",
+      "ts": "2026-10-18T21:14:06.363733+00:00"
+     },
+     {
+      "type": "sent",
+      "kind": "initial",
+      "gmail_message_id": "demo-crumbs-bakery-sent-1",
+      "to": "hello@crumbs-bakery.invalid",
+      "redirected_to_demo": true,
+      "subject": "[Paytriq demo -> Crumbs & Co Bakery] Sponsorship Opportunity: Fergusson Fest 2026 & Crumbs & Co Bakery",
+      "ts": "2026-10-18T21:15:25.999210+00:00"
+     },
+     {
+      "type": "reply",
+      "gmail_message_id": "demo-crumbs-bakery-reply-0",
+      "from": "owner@crumbs-bakery.invalid",
+      "text": "Happy to support the students. We will go with Bronze.",
+      "bounce": false,
+      "ts": "2026-10-18T21:16:50.519294+00:00",
+      "message_id_header": "<demo-crumbs-bakery-reply-0@paytriq.invalid>"
+     },
+     {
+      "type": "classified",
+      "brand_id": "demo-crumbs-bakery",
+      "label": "accepted",
+      "summary": "Crumbs & Co Bakery accepted the sponsorship proposal for the Bronze tier.",
+      "accepted_tier": "Bronze",
+      "constraint": null,
+      "max_price_inr": 5000,
+      "ts": "2026-10-18T21:17:01.577680+00:00"
+     },
+     {
+      "type": "accepted",
+      "tier": "Bronze",
+      "ts": "2026-10-18T21:17:09.502785+00:00"
+     }
+    ]
+   }
+  },
+  "evidence": [
+   {
+    "id": "16ab11d6-5920-4325-909f-75fe4afc557b",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-apex-coaching",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-0601818ff6dc4f128a6d1c1ba74cbb8b.png",
+    "mime_type": "image/png",
+    "note": "All Silver tier benefits included",
+    "created_at": "2026-10-18 21:18:28.659945+00:00"
+   },
+   {
+    "id": "41a6428b-214b-4287-a61f-26fa7513e53b",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-apex-coaching",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-30fb983fb7594252b870b5c6596f14cf.png",
+    "mime_type": "image/png",
+    "note": "Logo placement on the main stage backdrop banner",
+    "created_at": "2026-10-18 21:18:29.724009+00:00"
+   },
+   {
+    "id": "2d133eb4-9983-4e45-ac0d-97ce24663508",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-apex-coaching",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-c9b8c0d4345042cd804741d759ccd167.png",
+    "mime_type": "image/png",
+    "note": "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+    "created_at": "2026-10-18 21:18:30.740603+00:00"
+   },
+   {
+    "id": "ebef4cda-2fcd-406e-adbe-c7ff66c705ba",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-bean-theory",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-b097bd0fb4ab4b269695b55e309ccf2a.png",
+    "mime_type": "image/png",
+    "note": "Logo on the official printed event schedule posters displayed across campus",
+    "created_at": "2026-10-18 21:18:31.576148+00:00"
+   },
+   {
+    "id": "98bbfd14-c4ac-4915-8fbc-c29bdaf1979c",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-bean-theory",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-85b00690e2174929a25a264b9caacfda.png",
+    "mime_type": "image/png",
+    "note": "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+    "created_at": "2026-10-18 21:18:32.346416+00:00"
+   },
+   {
+    "id": "00d84cf4-22b5-4e5d-9e90-f07ed6e15b10",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-bean-theory",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-a9aba9e8abd446f191e50bb4017900c0.png",
+    "mime_type": "image/png",
+    "note": "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+    "created_at": "2026-10-18 21:18:33.179892+00:00"
+   },
+   {
+    "id": "3e667e57-0f47-4752-960e-59b29924c5ae",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-bean-theory",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-670ff3aa2bd346ba927b43ddca078803.png",
+    "mime_type": "image/png",
+    "note": "Distribution of Bean Theory discount vouchers directly to all event prize winners",
+    "created_at": "2026-10-18 21:18:33.975658+00:00"
+   },
+   {
+    "id": "838b060c-b00f-41e4-af51-999ca5b113b2",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-crumbs-bakery",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-d1923c52186f46df9c12cf66b301db5c.png",
+    "mime_type": "image/png",
+    "note": "Logo placement on official fest posters distributed across campus",
+    "created_at": "2026-10-18 21:18:35.033927+00:00"
+   },
+   {
+    "id": "9e554276-83e6-4931-9716-52a7d7dce79c",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-crumbs-bakery",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-9f33a7a0110c4457b08cab984f979b8a.png",
+    "mime_type": "image/png",
+    "note": "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+    "created_at": "2026-10-18 21:18:35.898213+00:00"
+   },
+   {
+    "id": "f565ddc5-a23a-4ceb-814f-8208d76029c9",
+    "run_id": "e160d171-213f-4076-b9c5-dab56e7c04d2",
+    "brand_id": "demo-crumbs-bakery",
+    "kind": "photo",
+    "url": null,
+    "storage_path": "e160d171-213f-4076-b9c5-dab56e7c04d2/demo-280ad169fa63460a97d6c77accc711a6.png",
+    "mime_type": "image/png",
+    "note": "Distribution of bakery discount coupons at the event registration counter",
+    "created_at": "2026-10-18 21:18:36.672903+00:00"
+   }
+  ],
+  "roi_report": {
+   "event": {
+    "name": "Fergusson Fest 2026",
+    "college": "Fergusson College, Pune",
+    "date": "2026-12-12",
+    "expected_footfall": 1800
+   },
+   "actual_footfall": 1500,
+   "generated_at": "2026-10-18T21:23:11.812190+00:00",
+   "sponsors": [
+    {
+     "brand_id": "demo-bean-theory",
+     "name": "Bean Theory Cafe",
+     "category": "cafe",
+     "tier": "Silver",
+     "price_inr": 5000,
+     "expected_reach": 2430,
+     "deliverables": [
+      "Logo on the official printed event schedule posters displayed across campus",
+      "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+      "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+      "Distribution of Bean Theory discount vouchers directly to all event prize winners"
+     ],
+     "checks": [
+      {
+       "deliverable": "Logo on the official printed event schedule posters displayed across campus",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "The image shows a digital sponsor graphic for Fergusson Fest 2026, but does not verify whether the logo appeared on printed schedule posters displayed across campus.",
+       "evidence_ids": [
+        "ebef4cda-2fcd-406e-adbe-c7ff66c705ba"
+       ]
+      },
+      {
+       "deliverable": "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "The evidence shows a digital sponsor graphic rather than a physical 6x3 ft standee placed near the central registration area.",
+       "evidence_ids": [
+        "98bbfd14-c4ac-4915-8fbc-c29bdaf1979c"
+       ]
+      },
+      {
+       "deliverable": "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "The image displays a standalone sponsor card rather than a collaborative Instagram feed post featuring cafe menu specials and student discounts.",
+       "evidence_ids": [
+        "00d84cf4-22b5-4e5d-9e90-f07ed6e15b10"
+       ]
+      },
+      {
+       "deliverable": "Distribution of Bean Theory discount vouchers directly to all event prize winners",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "The graphic confirms official festival sponsorship but provides no evidence showing discount vouchers being distributed to prize winners.",
+       "evidence_ids": [
+        "3e667e57-0f47-4752-960e-59b29924c5ae"
+       ]
+      }
+     ],
+     "delivered": 0,
+     "total": 4,
+     "delivery_rate": 0.0,
+     "calibration": {
+      "category": "cafe",
+      "factor": 0.0,
+      "verified_reach": 0,
+      "estimated_reach": 2430,
+      "footfall_used": 1500,
+      "footfall_source": "actual"
+     }
+    },
+    {
+     "brand_id": "demo-apex-coaching",
+     "name": "Apex Coaching Classes",
+     "category": "coaching",
+     "tier": "Gold",
+     "price_inr": 12000,
+     "expected_reach": 1530,
+     "deliverables": [
+      "All Silver tier benefits included",
+      "Logo placement on the main stage backdrop banner",
+      "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+      "2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships"
+     ],
+     "checks": [
+      {
+       "deliverable": "All Silver tier benefits included",
+       "status": "ambiguous",
+       "confidence": 0.85,
+       "explanation": "The image is a digital title slide rather than photo evidence showing the execution of the Silver tier benefits at the event.",
+       "evidence_ids": [
+        "16ab11d6-5920-4325-909f-75fe4afc557b"
+       ]
+      },
+      {
+       "deliverable": "Logo placement on the main stage backdrop banner",
+       "status": "ambiguous",
+       "confidence": 0.85,
+       "explanation": "The image shows a digital graphic layout featuring the sponsor name, but does not show the actual physical main stage backdrop banner at the event venue.",
+       "evidence_ids": [
+        "41a6428b-214b-4287-a61f-26fa7513e53b"
+       ]
+      },
+      {
+       "deliverable": "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+       "status": "ambiguous",
+       "confidence": 0.85,
+       "explanation": "The submitted evidence is a digital sponsor slide and does not depict a physical 6x6 ft information desk or counseling setup at the venue.",
+       "evidence_ids": [
+        "2d133eb4-9983-4e45-ac0d-97ce24663508"
+       ]
+      },
+      {
+       "deliverable": "2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships",
+       "status": "missing",
+       "confidence": 1.0,
+       "explanation": "No photo or link evidence was provided to demonstrate the podium address slot took place.",
+       "evidence_ids": []
+      }
+     ],
+     "delivered": 0,
+     "total": 4,
+     "delivery_rate": 0.0,
+     "calibration": {
+      "category": "coaching",
+      "factor": 0.0,
+      "verified_reach": 0,
+      "estimated_reach": 1530,
+      "footfall_used": 1500,
+      "footfall_source": "actual"
+     }
+    },
+    {
+     "brand_id": "demo-crumbs-bakery",
+     "name": "Crumbs & Co Bakery",
+     "category": "bakery",
+     "tier": "Bronze",
+     "price_inr": 5000,
+     "expected_reach": 1980,
+     "deliverables": [
+      "Logo placement on official fest posters distributed across campus",
+      "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+      "Distribution of bakery discount coupons at the event registration counter"
+     ],
+     "checks": [
+      {
+       "deliverable": "Logo placement on official fest posters distributed across campus",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "Evidence 838b060c-b00f-41e4-af51-999ca5b113b2 shows a digital graphic for Fergusson Fest with the Crumbs & Co Bakery logo, but it cannot be confirmed whether this was printed and distributed as official posters across campus.",
+       "evidence_ids": [
+        "838b060c-b00f-41e4-af51-999ca5b113b2"
+       ]
+      },
+      {
+       "deliverable": "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+       "status": "ambiguous",
+       "confidence": 0.8,
+       "explanation": "Evidence 9e554276-83e6-4931-9716-52a7d7dce79c displays the sponsor graphic slide but lacks any Instagram interface or account metadata to confirm it was published as a story on the official handle.",
+       "evidence_ids": [
+        "9e554276-83e6-4931-9716-52a7d7dce79c"
+       ]
+      },
+      {
+       "deliverable": "Distribution of bakery discount coupons at the event registration counter",
+       "status": "ambiguous",
+       "confidence": 0.85,
+       "explanation": "Evidence f565ddc5-a23a-4ceb-814f-8208d76029c9 only shows a generic digital sponsorship graphic rather than photographic proof of discount coupons or their distribution at the registration counter.",
+       "evidence_ids": [
+        "f565ddc5-a23a-4ceb-814f-8208d76029c9"
+       ]
+      }
+     ],
+     "delivered": 0,
+     "total": 3,
+     "delivery_rate": 0.0,
+     "calibration": {
+      "category": "bakery",
+      "factor": 0.0,
+      "verified_reach": 0,
+      "estimated_reach": 1980,
+      "footfall_used": 1500,
+      "footfall_source": "actual"
+     }
+    }
+   ],
+   "overall_delivery_rate": 0.0,
+   "disclosed_gaps": [
+    {
+     "brand_id": "demo-bean-theory",
+     "brand_name": "Bean Theory Cafe",
+     "deliverable": "Logo on the official printed event schedule posters displayed across campus",
+     "status": "ambiguous",
+     "explanation": "The image shows a digital sponsor graphic for Fergusson Fest 2026, but does not verify whether the logo appeared on printed schedule posters displayed across campus."
+    },
+    {
+     "brand_id": "demo-bean-theory",
+     "brand_name": "Bean Theory Cafe",
+     "deliverable": "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+     "status": "ambiguous",
+     "explanation": "The evidence shows a digital sponsor graphic rather than a physical 6x3 ft standee placed near the central registration area."
+    },
+    {
+     "brand_id": "demo-bean-theory",
+     "brand_name": "Bean Theory Cafe",
+     "deliverable": "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+     "status": "ambiguous",
+     "explanation": "The image displays a standalone sponsor card rather than a collaborative Instagram feed post featuring cafe menu specials and student discounts."
+    },
+    {
+     "brand_id": "demo-bean-theory",
+     "brand_name": "Bean Theory Cafe",
+     "deliverable": "Distribution of Bean Theory discount vouchers directly to all event prize winners",
+     "status": "ambiguous",
+     "explanation": "The graphic confirms official festival sponsorship but provides no evidence showing discount vouchers being distributed to prize winners."
+    },
+    {
+     "brand_id": "demo-apex-coaching",
+     "brand_name": "Apex Coaching Classes",
+     "deliverable": "All Silver tier benefits included",
+     "status": "ambiguous",
+     "explanation": "The image is a digital title slide rather than photo evidence showing the execution of the Silver tier benefits at the event."
+    },
+    {
+     "brand_id": "demo-apex-coaching",
+     "brand_name": "Apex Coaching Classes",
+     "deliverable": "Logo placement on the main stage backdrop banner",
+     "status": "ambiguous",
+     "explanation": "The image shows a digital graphic layout featuring the sponsor name, but does not show the actual physical main stage backdrop banner at the event venue."
+    },
+    {
+     "brand_id": "demo-apex-coaching",
+     "brand_name": "Apex Coaching Classes",
+     "deliverable": "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+     "status": "ambiguous",
+     "explanation": "The submitted evidence is a digital sponsor slide and does not depict a physical 6x6 ft information desk or counseling setup at the venue."
+    },
+    {
+     "brand_id": "demo-apex-coaching",
+     "brand_name": "Apex Coaching Classes",
+     "deliverable": "2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships",
+     "status": "missing",
+     "explanation": "No photo or link evidence was provided to demonstrate the podium address slot took place."
+    },
+    {
+     "brand_id": "demo-crumbs-bakery",
+     "brand_name": "Crumbs & Co Bakery",
+     "deliverable": "Logo placement on official fest posters distributed across campus",
+     "status": "ambiguous",
+     "explanation": "Evidence 838b060c-b00f-41e4-af51-999ca5b113b2 shows a digital graphic for Fergusson Fest with the Crumbs & Co Bakery logo, but it cannot be confirmed whether this was printed and distributed as official posters across campus."
+    },
+    {
+     "brand_id": "demo-crumbs-bakery",
+     "brand_name": "Crumbs & Co Bakery",
+     "deliverable": "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+     "status": "ambiguous",
+     "explanation": "Evidence 9e554276-83e6-4931-9716-52a7d7dce79c displays the sponsor graphic slide but lacks any Instagram interface or account metadata to confirm it was published as a story on the official handle."
+    },
+    {
+     "brand_id": "demo-crumbs-bakery",
+     "brand_name": "Crumbs & Co Bakery",
+     "deliverable": "Distribution of bakery discount coupons at the event registration counter",
+     "status": "ambiguous",
+     "explanation": "Evidence f565ddc5-a23a-4ceb-814f-8208d76029c9 only shows a generic digital sponsorship graphic rather than photographic proof of discount coupons or their distribution at the registration counter."
+    }
+   ],
+   "evidence_requests": [
+    "Photo of the official printed event schedule posters displayed across campus clearly showing the Bean Theory Cafe logo.",
+    "Photo of the physical 6x3 ft Bean Theory branded standee positioned near the central registration area during the event.",
+    "Live link or full Instagram interface screenshot of the collaborative feed post highlighting Bean Theory Cafe menu specials and student discounts.",
+    "Photographic evidence showing Bean Theory discount vouchers being distributed to event prize winners.",
+    "Photo of the physical main stage backdrop banner at the venue clearly displaying the Apex Coaching Classes logo.",
+    "Photo of the dedicated 6x6 ft Apex Coaching information desk set up near the registration desk with counseling or lead collection taking place.",
+    "Photo or video recording of the 2-minute podium address introducing Apex Coaching scholarships before the valedictory ceremony.",
+    "Photo of official printed fest posters distributed across campus showing the Crumbs & Co Bakery logo.",
+    "Screenshot of the dedicated shoutout story published on the official Fergusson Fest Instagram handle for Crumbs & Co Bakery, including handle header and timestamp.",
+    "Photo of Crumbs & Co Bakery discount coupons being distributed at the event registration counter."
+   ],
+   "summary": "An ROI audit of Fergusson Fest 2026 was conducted across all three accepted sponsors: Bean Theory Cafe, Apex Coaching Classes, and Crumbs & Co Bakery. All 10 verifiable deliverables currently remain ambiguous as only digital promotional slides were submitted instead of on-ground proof, while the podium address slot for Apex Coaching Classes is missing. Ten specific evidence requests for physical event photos, registration setups, and social media verification have been issued to the organizer to complete the audit.",
+   "published": true,
+   "organizer_note": null,
+   "published_with_gaps": true
+  },
+  "messages": [
+   {
+    "id": "e6a2ee85cfe7",
+    "from_agent": "supervisor",
+    "to_agent": "discovery",
+    "type": "decision",
+    "content": {
+     "next": "discovery",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The discovery phase has just begun with no brands identified yet. The discovery agent needs to find and rank suitable local sponsors for Fergusson Fest 2026.",
+    "ts": "2026-10-18T21:01:46.505832Z"
+   },
+   {
+    "id": "54941b61c877",
+    "from_agent": "discovery",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "found": 6,
+     "good_fit": 5,
+     "searches": [
+      {
+       "categories": [
+        "cafe",
+        "bookstore",
+        "clothing",
+        "restaurant",
+        "bakery"
+       ],
+       "radius_km": 2.0,
+       "source": "demo_fixture",
+       "found": 4
+      },
+      {
+       "categories": [
+        "stationery",
+        "coaching",
+        "electronics",
+        "gym",
+        "salon"
+       ],
+       "radius_km": 3.0,
+       "source": "demo_fixture",
+       "found": 2
+      }
+     ],
+     "in_reply_to": []
+    },
+    "reasoning": "Ranked 6 brands; 5 are a good fit.",
+    "ts": "2026-10-18T21:02:36.523360Z"
+   },
+   {
+    "id": "88046f5b0e16",
+    "from_agent": "supervisor",
+    "to_agent": "human_approval",
+    "type": "decision",
+    "content": {
+     "next": "human_approval",
+     "gate": "shortlist",
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Discovery has identified 5 good-fit brands, so the shortlist must now be submitted to the organizer for approval before proposals are generated.",
+    "ts": "2026-10-18T21:02:39.662776Z"
+   },
+   {
+    "id": "9d6b35039674",
+    "from_agent": "human",
+    "to_agent": "supervisor",
+    "type": "decision",
+    "content": {
+     "gate": "shortlist",
+     "decision": "approve",
+     "edits": {
+      "selected_brand_ids": [
+       "demo-chai-junction",
+       "demo-bean-theory",
+       "demo-ironcore-gym",
+       "demo-apex-coaching",
+       "demo-pulsefit-gym"
+      ]
+     },
+     "in_reply_to": []
+    },
+    "reasoning": "Organizer chose to approve the shortlist gate.",
+    "ts": "2026-10-18T21:03:36.812302Z"
+   },
+   {
+    "id": "a0a8de628779",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "decision",
+    "content": {
+     "next": "proposal",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The organizer approved the shortlist gate for 5 selected brands, moving the workflow into the proposals phase where pitch decks and sponsorship tiers must now be created.",
+    "ts": "2026-10-18T21:03:40.084957Z"
+   },
+   {
+    "id": "3d427290d178",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-chai-junction",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-chai-junction-v1.pdf",
+     "prices": {
+      "Bronze": 8000,
+      "Silver": 15000,
+      "Gold": 25000
+     }
+    },
+    "reasoning": "Initial proposal draft tailored for Chai Junction Cafe with affordable neighborhood cafe tier pricing.",
+    "ts": "2026-10-18T21:04:03.403531Z"
+   },
+   {
+    "id": "f276fc5d9d40",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-bean-theory",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-bean-theory-v1.pdf",
+     "prices": {
+      "Bronze": 10000,
+      "Silver": 20000,
+      "Gold": 30000
+     }
+    },
+    "reasoning": "Proposal for Bean Theory Cafe has been drafted, verified, and successfully rendered to PDF at https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-bean-theory-v1.pdf with three balanced tiers (Bronze: \u20b910,000, Silver: \u20b920,000, Gold: \u20b930,000).",
+    "ts": "2026-10-18T21:04:29.791221Z"
+   },
+   {
+    "id": "3e13948ef059",
+    "from_agent": "proposal",
+    "to_agent": "human",
+    "type": "escalation",
+    "content": {
+     "reason": "clef_unsure",
+     "purpose": "proposal.feasibility",
+     "p_yes": 0.4257,
+     "applied": true,
+     "brand_id": "demo-ironcore-gym"
+    },
+    "reasoning": "Clef was unsure about whether IronCore Gym (gym) can gain anything from this event (P(yes) = 0.43); kept the rule's answer (yes). Please check this one.",
+    "ts": "2026-10-18T21:04:30.594942Z"
+   },
+   {
+    "id": "5df67b924eb4",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-ironcore-gym",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-ironcore-gym-v1.pdf",
+     "prices": {
+      "Bronze": 12000,
+      "Silver": 22000,
+      "Gold": 35000
+     }
+    },
+    "reasoning": "Proposal for IronCore Gym successfully created and rendered. Pricing verified across Bronze (\u20b912,000), Silver (\u20b922,000), and Gold (\u20b935,000) tiers with targeted deliverables for a college fest audience. PDF available at: https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-ironcore-gym-v1.pdf",
+    "ts": "2026-10-18T21:04:53.280855Z"
+   },
+   {
+    "id": "b11c124b5084",
+    "from_agent": "proposal",
+    "to_agent": "human",
+    "type": "escalation",
+    "content": {
+     "reason": "clef_unsure",
+     "purpose": "proposal.feasibility",
+     "p_yes": 0.514,
+     "applied": true,
+     "brand_id": "demo-apex-coaching"
+    },
+    "reasoning": "Clef was unsure about whether Apex Coaching Classes (coaching) can gain anything from this event (P(yes) = 0.51); kept the rule's answer (yes). Please check this one.",
+    "ts": "2026-10-18T21:04:54.035294Z"
+   },
+   {
+    "id": "6d0a6b37e47a",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-apex-coaching",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-apex-coaching-v1.pdf",
+     "prices": {
+      "Bronze": 12000,
+      "Silver": 25000,
+      "Gold": 48000
+     }
+    },
+    "reasoning": "Initial proposal draft tailored to Apex Coaching Classes and Fergusson College demographics.",
+    "ts": "2026-10-18T21:05:19.513922Z"
+   },
+   {
+    "id": "660aae33edf3",
+    "from_agent": "proposal",
+    "to_agent": "human",
+    "type": "escalation",
+    "content": {
+     "reason": "clef_unsure",
+     "purpose": "proposal.feasibility",
+     "p_yes": 0.6917,
+     "applied": true,
+     "brand_id": "demo-pulsefit-gym"
+    },
+    "reasoning": "Clef was unsure about whether PulseFit Gym (gym) can gain anything from this event (P(yes) = 0.69); kept the rule's answer (yes). Please check this one.",
+    "ts": "2026-10-18T21:05:20.233273Z"
+   },
+   {
+    "id": "2abdb05a1821",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-pulsefit-gym",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-pulsefit-gym-v1.pdf",
+     "prices": {
+      "Bronze": 8000,
+      "Silver": 18000,
+      "Gold": 35000
+     }
+    },
+    "reasoning": "The sponsorship proposal for PulseFit Gym has been successfully prepared, verified, and rendered to PDF. It features a tailored pitch for an Indian college event targeting fitness-conscious youth, accompanied by three well-defined tiers (Bronze at \u20b98,000, Silver at \u20b918,000, and Gold at \u20b935,000) with concrete deliverables. The final PDF is available at https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-pulsefit-gym-v1.pdf.",
+    "ts": "2026-10-18T21:05:41.958470Z"
+   },
+   {
+    "id": "f5e2d15de8db",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "revision_request",
+    "content": {
+     "brand_id": "demo-apex-coaching",
+     "source": "arbitration",
+     "arbitration": "A2",
+     "max_price_inr": 12500,
+     "from_version": 1,
+     "median_accepted_inr": 10000,
+     "deals_compared": 3,
+     "constraint": "Keep every tier at or below Rs 12,500 (past coaching deals: median Rs 10,000)."
+    },
+    "reasoning": "Because three accepted coaching deals have a median of Rs 10,000, the proposed rate of up to Rs 48,000 for Apex Coaching Classes has been capped at Rs 12,500 (1.25 times the median) under rule A2. We have asked for a revised proposal within this limit to ensure the pricing aligns with past accepted benchmarks.",
+    "ts": "2026-10-18T21:05:49.062374Z"
+   },
+   {
+    "id": "82453d1723ea",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "decision",
+    "content": {
+     "next": "proposal",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "There is an open revision request for demo-apex-coaching resulting from A2 price arbitration that needs to be resolved by the proposal agent.",
+    "ts": "2026-10-18T21:05:52.790228Z"
+   },
+   {
+    "id": "3779dcb43498",
+    "from_agent": "proposal",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-apex-coaching",
+     "version": 2,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-apex-coaching-v2.pdf",
+     "prices": {
+      "Bronze": 6000,
+      "Silver": 9000,
+      "Gold": 12000
+     },
+     "in_reply_to": [
+      "f5e2d15de8db"
+     ],
+     "constraint": "Keep every tier at or below Rs 12,500 (past coaching deals: median Rs 10,000)."
+    },
+    "reasoning": "Reduced all tier pricing to strictly adhere to the Rs 12,500 ceiling: lowered Bronze from Rs 12,000 to Rs 6,000, Silver from Rs 25,000 to Rs 9,000, and Gold from Rs 48,000 to Rs 12,000. Adjusted deliverables proportionately to realistic, high-impact engagement formats suited for coaching outreach.",
+    "ts": "2026-10-18T21:06:16.092292Z"
+   },
+   {
+    "id": "fd6d6794f22a",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Proposals have been drafted and revised, so the outreach agent must now critique them and prepare outreach emails.",
+    "ts": "2026-10-18T21:06:21.794434Z"
+   },
+   {
+    "id": "6015d03ae223",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [],
+     "threads": {
+      "demo-chai-junction": "draft",
+      "demo-bean-theory": "draft",
+      "demo-ironcore-gym": "draft",
+      "demo-apex-coaching": "draft",
+      "demo-pulsefit-gym": "draft"
+     },
+     "in_reply_to": []
+    },
+    "reasoning": "Critiqued proposals for Chai Junction, Bean Theory, IronCore Gym, Apex Coaching, and PulseFit Gym. All 5 proposals met outreach standards, and the generated emails have been prepared and queued for the organizer's send approval.",
+    "ts": "2026-10-18T21:06:53.238963Z"
+   },
+   {
+    "id": "524337642575",
+    "from_agent": "supervisor",
+    "to_agent": "human_approval",
+    "type": "decision",
+    "content": {
+     "next": "human_approval",
+     "gate": "send",
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "All five proposal emails have been drafted and queued, requiring the organizer's approval at the send gate before outreach can dispatch them.",
+    "ts": "2026-10-18T21:06:57.181317Z"
+   },
+   {
+    "id": "0674f14629d1",
+    "from_agent": "human",
+    "to_agent": "supervisor",
+    "type": "decision",
+    "content": {
+     "gate": "send",
+     "decision": "approve",
+     "edits": {},
+     "in_reply_to": [
+      "3e13948ef059",
+      "b11c124b5084",
+      "660aae33edf3"
+     ]
+    },
+    "reasoning": "Organizer chose to approve the send gate.",
+    "ts": "2026-10-18T21:08:00.217309Z"
+   },
+   {
+    "id": "a1f9ef43a8ae",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The organizer has approved the send gate, so outreach can now dispatch the queued emails to the sponsors.",
+    "ts": "2026-10-18T21:08:03.544942Z"
+   },
+   {
+    "id": "8b698ac3fb0f",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [
+      "demo-chai-junction",
+      "demo-bean-theory",
+      "demo-ironcore-gym",
+      "demo-apex-coaching",
+      "demo-pulsefit-gym"
+     ],
+     "threads": {
+      "demo-chai-junction": "sent",
+      "demo-bean-theory": "sent",
+      "demo-ironcore-gym": "sent",
+      "demo-apex-coaching": "sent",
+      "demo-pulsefit-gym": "sent"
+     },
+     "in_reply_to": []
+    },
+    "reasoning": "Successfully dispatched approved sponsorship outreach emails to Chai Junction, Bean Theory, IronCore Gym, Apex Coaching, and PulseFit Gym. Awaiting brand responses.",
+    "ts": "2026-10-18T21:08:12.287770Z"
+   },
+   {
+    "id": "edcc42b60e88",
+    "from_agent": "supervisor",
+    "to_agent": "END",
+    "type": "decision",
+    "content": {
+     "next": "END",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "All 5 approved proposal emails have been sent, and the system is now waiting for external replies from the sponsors.",
+    "ts": "2026-10-18T21:08:15.614495Z"
+   },
+   {
+    "id": "58f2373d9bf0",
+    "from_agent": "human",
+    "to_agent": "outreach",
+    "type": "request",
+    "content": {
+     "action": "poll_replies"
+    },
+    "reasoning": "Organizer asked to check for replies.",
+    "ts": "2026-10-18T21:09:23.903550Z"
+   },
+   {
+    "id": "8f814333e9bd",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "There is an open request from the organizer directing outreach to poll for sponsor replies.",
+    "ts": "2026-10-18T21:09:27.741189Z"
+   },
+   {
+    "id": "1c395e902b4b",
+    "from_agent": "outreach",
+    "to_agent": "proposal",
+    "type": "revision_request",
+    "content": {
+     "brand_id": "demo-bean-theory",
+     "constraint": "Maximum spend capped at Rs 8,000",
+     "source": "brand_reply",
+     "reply_label": "pushback_price",
+     "from_version": 1,
+     "max_price_inr": 8000
+    },
+    "reasoning": "Interested in sponsoring but capped at a maximum budget of Rs 8,000.",
+    "ts": "2026-10-18T21:09:59.264815Z"
+   },
+   {
+    "id": "16aa8c5c9241",
+    "from_agent": "outreach",
+    "to_agent": "discovery",
+    "type": "request",
+    "content": {
+     "reason": "replacement",
+     "brand_id": "demo-chai-junction",
+     "why": "Email delivery failed (bounced)."
+    },
+    "reasoning": "Email delivery failed (bounced).",
+    "ts": "2026-10-18T21:10:04.989408Z"
+   },
+   {
+    "id": "a4229ed398cd",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [],
+     "threads": {
+      "demo-chai-junction": "bounced",
+      "demo-bean-theory": "pushback",
+      "demo-ironcore-gym": "replied",
+      "demo-apex-coaching": "accepted",
+      "demo-pulsefit-gym": "replied"
+     },
+     "in_reply_to": [
+      "58f2373d9bf0"
+     ]
+    },
+    "reasoning": "Processed replies for Fergusson Fest 2026: Apex Coaching accepted the Gold tier (deal recorded); Bean Theory's Rs 8,000 budget pushback was routed to the Proposal agent; Chai Junction bounced and a replacement was requested from Discovery; Ironcore Gym and Pulsefit Gym declined sponsorship.",
+    "ts": "2026-10-18T21:10:17.920127Z"
+   },
+   {
+    "id": "19e6297d6a25",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "decision",
+    "content": {
+     "next": "proposal",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Proposal has an open revision request to adjust the pricing for Bean Theory following their budget pushback.",
+    "ts": "2026-10-18T21:10:29.917000Z"
+   },
+   {
+    "id": "0b00d1d4e248",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-bean-theory",
+     "version": 2,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-bean-theory-v2.pdf",
+     "prices": {
+      "Bronze": 3000,
+      "Silver": 5000,
+      "Gold": 8000
+     },
+     "in_reply_to": [
+      "1c395e902b4b"
+     ],
+     "constraint": "Maximum spend capped at Rs 8,000"
+    },
+    "reasoning": "Adjusted tier pricing to comply with the Rs 8,000 maximum spend cap: scaled down Bronze to Rs 3,000, Silver to Rs 5,000, and Gold to Rs 8,000. Refined deliverables across all tiers to provide cost-effective, high-impact branding, on-campus kiosk space, and student social media reach within the revised budget.",
+    "ts": "2026-10-18T21:10:55.047471Z"
+   },
+   {
+    "id": "b049905d8cac",
+    "from_agent": "supervisor",
+    "to_agent": "discovery",
+    "type": "decision",
+    "content": {
+     "next": "discovery",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Discovery has an open request to find a replacement brand for Chai Junction after email delivery bounced.",
+    "ts": "2026-10-18T21:11:00.575384Z"
+   },
+   {
+    "id": "a9bc737cb21a",
+    "from_agent": "discovery",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "replacement_for": "demo-chai-junction",
+     "brand_id": "demo-metro-wholesale",
+     "reason": "replacement",
+     "in_reply_to": [
+      "16aa8c5c9241"
+     ]
+    },
+    "reasoning": "Selected Metro Wholesale Traders as it is the available unused candidate with a verified contact email to replace demo-chai-junction.",
+    "ts": "2026-10-18T21:11:23.744621Z"
+   },
+   {
+    "id": "3b90728d6689",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "decision",
+    "content": {
+     "next": "proposal",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Discovery identified Metro Wholesale as the replacement sponsor for Chai Junction; Proposal needs to create a sponsorship pitch and pricing tiers for it.",
+    "ts": "2026-10-18T21:11:49.301618Z"
+   },
+   {
+    "id": "92dc1b2a2083",
+    "from_agent": "proposal",
+    "to_agent": "discovery",
+    "type": "request",
+    "content": {
+     "reason": "infeasible",
+     "brand_id": "demo-metro-wholesale",
+     "why": "No event deliverable fits a wholesale business: it sells in bulk to shops, not to students.",
+     "p_yes": 0.0692,
+     "decided_by": "clef"
+    },
+    "reasoning": "No event deliverable fits a wholesale business: it sells in bulk to shops, not to students.",
+    "ts": "2026-10-18T21:11:50.411941Z"
+   },
+   {
+    "id": "97da0d70a404",
+    "from_agent": "supervisor",
+    "to_agent": "discovery",
+    "type": "decision",
+    "content": {
+     "next": "discovery",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Discovery has an open request from Proposal to find a replacement brand after Metro Wholesale was deemed infeasible.",
+    "ts": "2026-10-18T21:11:54.578380Z"
+   },
+   {
+    "id": "72ea2f0967c7",
+    "from_agent": "discovery",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "replacement_for": "demo-metro-wholesale",
+     "brand_id": "demo-crumbs-bakery",
+     "reason": "infeasible",
+     "in_reply_to": [
+      "92dc1b2a2083"
+     ]
+    },
+    "reasoning": "Highest-ranked unused brand (automatic choice).",
+    "ts": "2026-10-18T21:13:04.608133Z"
+   },
+   {
+    "id": "529b2f04574c",
+    "from_agent": "supervisor",
+    "to_agent": "proposal",
+    "type": "decision",
+    "content": {
+     "next": "proposal",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Discovery has selected Crumbs Bakery as the replacement brand; Proposal now needs to generate the sponsorship pitch and pricing tiers for it.",
+    "ts": "2026-10-18T21:13:10.863993Z"
+   },
+   {
+    "id": "dbcd6c5e4b08",
+    "from_agent": "proposal",
+    "to_agent": "outreach",
+    "type": "result",
+    "content": {
+     "brand_id": "demo-crumbs-bakery",
+     "version": 1,
+     "pdf_url": "https://essravfkemrewdubjtau.supabase.co/storage/v1/object/public/proposals/e160d171-213f-4076-b9c5-dab56e7c04d2/demo-crumbs-bakery-v1.pdf",
+     "prices": {
+      "Bronze": 5000,
+      "Silver": 10000,
+      "Gold": 18000
+     }
+    },
+    "reasoning": "Initial proposal draft tailored for Crumbs & Co Bakery targeting FC Road student demographic.",
+    "ts": "2026-10-18T21:13:34.963463Z"
+   },
+   {
+    "id": "aed26b878c65",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Proposal generated the initial pitch for Crumbs Bakery; Outreach needs to critique the proposal before preparing it for organizer approval.",
+    "ts": "2026-10-18T21:13:40.083775Z"
+   },
+   {
+    "id": "8eee226fd005",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [],
+     "threads": {
+      "demo-chai-junction": "bounced",
+      "demo-bean-theory": "pushback",
+      "demo-ironcore-gym": "replied",
+      "demo-apex-coaching": "accepted",
+      "demo-pulsefit-gym": "replied",
+      "demo-crumbs-bakery": "draft"
+     },
+     "in_reply_to": []
+    },
+    "reasoning": "Critiqued the draft proposals for Demo Bean Theory and Demo Crumbs Bakery with positive verdicts and prepared the outreach emails, which are now queued awaiting organizer approval before sending.",
+    "ts": "2026-10-18T21:14:18.742264Z"
+   },
+   {
+    "id": "9d1873d64837",
+    "from_agent": "supervisor",
+    "to_agent": "human_approval",
+    "type": "decision",
+    "content": {
+     "next": "human_approval",
+     "gate": "send",
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "Draft outreach emails are prepared for review and require organizer approval under the send gate before outreach can dispatch them.",
+    "ts": "2026-10-18T21:14:21.927333Z"
+   },
+   {
+    "id": "0843feba5c0e",
+    "from_agent": "human",
+    "to_agent": "supervisor",
+    "type": "decision",
+    "content": {
+     "gate": "send",
+     "decision": "approve",
+     "edits": {},
+     "in_reply_to": []
+    },
+    "reasoning": "Organizer chose to approve the send gate.",
+    "ts": "2026-10-18T21:15:17.880456Z"
+   },
+   {
+    "id": "aeae85a7ebd4",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The organizer approved the send gate, so Outreach can now dispatch the queued emails.",
+    "ts": "2026-10-18T21:15:21.332930Z"
+   },
+   {
+    "id": "42e58b273045",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [
+      "demo-bean-theory",
+      "demo-crumbs-bakery"
+     ],
+     "threads": {
+      "demo-chai-junction": "bounced",
+      "demo-bean-theory": "sent",
+      "demo-ironcore-gym": "replied",
+      "demo-apex-coaching": "accepted",
+      "demo-pulsefit-gym": "replied",
+      "demo-crumbs-bakery": "sent"
+     },
+     "in_reply_to": []
+    },
+    "reasoning": "Approved outreach emails have been sent to Demo Bean Theory and Demo Crumbs Bakery following organizer gate approval. Current thread statuses: Demo Apex Coaching is accepted, Demo Bean Theory has price pushback, Demo Chai Junction bounced, and Demo Ironcore Gym and Demo Pulsefit Gym declined.",
+    "ts": "2026-10-18T21:15:39.246263Z"
+   },
+   {
+    "id": "61272dc0d8ac",
+    "from_agent": "supervisor",
+    "to_agent": "END",
+    "type": "decision",
+    "content": {
+     "next": "END",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "All approved emails have been sent and there are no open requests or pending approvals, so the system waits for replies from contacted brands.",
+    "ts": "2026-10-18T21:15:42.440759Z"
+   },
+   {
+    "id": "ab25ab8ba23c",
+    "from_agent": "human",
+    "to_agent": "outreach",
+    "type": "request",
+    "content": {
+     "action": "poll_replies"
+    },
+    "reasoning": "Organizer asked to check for replies.",
+    "ts": "2026-10-18T21:16:42.921648Z"
+   },
+   {
+    "id": "a07407f74ff4",
+    "from_agent": "supervisor",
+    "to_agent": "outreach",
+    "type": "decision",
+    "content": {
+     "next": "outreach",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The organizer requested to check for replies, so Outreach needs to poll and classify incoming emails.",
+    "ts": "2026-10-18T21:16:47.142049Z"
+   },
+   {
+    "id": "5ea6e7e69e58",
+    "from_agent": "outreach",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "sent": [],
+     "threads": {
+      "demo-chai-junction": "bounced",
+      "demo-bean-theory": "accepted",
+      "demo-ironcore-gym": "replied",
+      "demo-apex-coaching": "accepted",
+      "demo-pulsefit-gym": "replied",
+      "demo-crumbs-bakery": "accepted"
+     },
+     "in_reply_to": [
+      "ab25ab8ba23c"
+     ]
+    },
+    "reasoning": "Successfully polled replies, classified responses, and recorded acceptances for Bean Theory Cafe (Silver tier) and Crumbs Bakery (Bronze tier).",
+    "ts": "2026-10-18T21:17:12.851991Z"
+   },
+   {
+    "id": "7994dd583fc3",
+    "from_agent": "supervisor",
+    "to_agent": "END",
+    "type": "decision",
+    "content": {
+     "next": "END",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "All replies have been polled and recorded, and there are no open requests, pending approvals, or escalations. The system should stop and wait for external events or organizer input.",
+    "ts": "2026-10-18T21:17:17.887445Z"
+   },
+   {
+    "id": "3d4c26e1b3b6",
+    "from_agent": "human",
+    "to_agent": "roi_audit",
+    "type": "request",
+    "content": {
+     "action": "audit",
+     "evidence_items": 10
+    },
+    "reasoning": "Organizer asked for the post-event ROI audit.",
+    "ts": "2026-10-18T21:18:37.235020Z"
+   },
+   {
+    "id": "076c4d315030",
+    "from_agent": "supervisor",
+    "to_agent": "roi_audit",
+    "type": "decision",
+    "content": {
+     "next": "roi_audit",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The organizer requested a post-event ROI audit on the uploaded evidence items, so roi_audit must process this open request.",
+    "ts": "2026-10-18T21:18:41.333539Z"
+   },
+   {
+    "id": "eaedfc5e597d",
+    "from_agent": "roi_audit",
+    "to_agent": "human",
+    "type": "escalation",
+    "content": {
+     "gaps": 11,
+     "requests": [
+      "Photo of the official printed event schedule posters displayed across campus clearly showing the Bean Theory Cafe logo.",
+      "Photo of the physical 6x3 ft Bean Theory branded standee positioned near the central registration area during the event.",
+      "Live link or full Instagram interface screenshot of the collaborative feed post highlighting Bean Theory Cafe menu specials and student discounts.",
+      "Photographic evidence showing Bean Theory discount vouchers being distributed to event prize winners.",
+      "Photo of the physical main stage backdrop banner at the venue clearly displaying the Apex Coaching Classes logo.",
+      "Photo of the dedicated 6x6 ft Apex Coaching information desk set up near the registration desk with counseling or lead collection taking place.",
+      "Photo or video recording of the 2-minute podium address introducing Apex Coaching scholarships before the valedictory ceremony.",
+      "Photo of official printed fest posters distributed across campus showing the Crumbs & Co Bakery logo.",
+      "Screenshot of the dedicated shoutout story published on the official Fergusson Fest Instagram handle for Crumbs & Co Bakery, including handle header and timestamp.",
+      "Photo of Crumbs & Co Bakery discount coupons being distributed at the event registration counter."
+     ],
+     "overall_delivery_rate": 0.0
+    },
+    "reasoning": "11 deliverable(s) could not be verified; asking for specific evidence instead of guessing.",
+    "ts": "2026-10-18T21:23:11.812245Z"
+   },
+   {
+    "id": "8334fc5db4b4",
+    "from_agent": "roi_audit",
+    "to_agent": "supervisor",
+    "type": "result",
+    "content": {
+     "overall_delivery_rate": 0.0,
+     "gaps": 11,
+     "in_reply_to": [
+      "3d4c26e1b3b6"
+     ]
+    },
+    "reasoning": "An ROI audit of Fergusson Fest 2026 was conducted across all three accepted sponsors: Bean Theory Cafe, Apex Coaching Classes, and Crumbs & Co Bakery. All 10 verifiable deliverables currently remain ambiguous as only digital promotional slides were submitted instead of on-ground proof, while the podium address slot for Apex Coaching Classes is missing. Ten specific evidence requests for physical event photos, registration setups, and social media verification have been issued to the organizer to complete the audit.",
+    "ts": "2026-10-18T21:23:11.981301Z"
+   },
+   {
+    "id": "600071177667",
+    "from_agent": "supervisor",
+    "to_agent": "human",
+    "type": "escalation",
+    "content": {
+     "reason": "missing_proof",
+     "arbitration": "A3",
+     "missing": [
+      {
+       "brand_id": "demo-bean-theory",
+       "brand_name": "Bean Theory Cafe",
+       "deliverable": "Logo on the official printed event schedule posters displayed across campus",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-bean-theory",
+       "brand_name": "Bean Theory Cafe",
+       "deliverable": "Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-bean-theory",
+       "brand_name": "Bean Theory Cafe",
+       "deliverable": "1 collaborative Instagram feed post highlighting cafe menu specials and student discounts",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-bean-theory",
+       "brand_name": "Bean Theory Cafe",
+       "deliverable": "Distribution of Bean Theory discount vouchers directly to all event prize winners",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-apex-coaching",
+       "brand_name": "Apex Coaching Classes",
+       "deliverable": "All Silver tier benefits included",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-apex-coaching",
+       "brand_name": "Apex Coaching Classes",
+       "deliverable": "Logo placement on the main stage backdrop banner",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-apex-coaching",
+       "brand_name": "Apex Coaching Classes",
+       "deliverable": "Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-apex-coaching",
+       "brand_name": "Apex Coaching Classes",
+       "deliverable": "2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships",
+       "status": "missing"
+      },
+      {
+       "brand_id": "demo-crumbs-bakery",
+       "brand_name": "Crumbs & Co Bakery",
+       "deliverable": "Logo placement on official fest posters distributed across campus",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-crumbs-bakery",
+       "brand_name": "Crumbs & Co Bakery",
+       "deliverable": "1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle",
+       "status": "ambiguous"
+      },
+      {
+       "brand_id": "demo-crumbs-bakery",
+       "brand_name": "Crumbs & Co Bakery",
+       "deliverable": "Distribution of bakery discount coupons at the event registration counter",
+       "status": "ambiguous"
+      }
+     ],
+     "options": [
+      "upload evidence and re-run the audit",
+      "publish with gaps disclosed"
+     ]
+    },
+    "reasoning": "Missing proof: Bean Theory Cafe: 'Logo on the official printed event schedule posters displayed across campus' (ambiguous); Bean Theory Cafe: 'Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)' (ambiguous); Bean Theory Cafe: '1 collaborative Instagram feed post highlighting cafe menu specials and student discounts' (ambiguous); Bean Theory Cafe: 'Distribution of Bean Theory discount vouchers directly to all event prize winners' (ambiguous); Apex Coaching Classes: 'All Silver tier benefits included' (ambiguous); Apex Coaching Classes: 'Logo placement on the main stage backdrop banner' (ambiguous); Apex Coaching Classes: 'Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection' (ambiguous); Apex Coaching Classes: '2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships' (missing); Crumbs & Co Bakery: 'Logo placement on official fest posters distributed across campus' (ambiguous); Crumbs & Co Bakery: '1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle' (ambiguous); Crumbs & Co Bakery: 'Distribution of bakery discount coupons at the event registration counter' (ambiguous). Because the ROI audit could not verify 11 promised deliverables across Bean Theory Cafe, Apex Coaching Classes, and Crumbs & Co Bakery due to missing and ambiguous evidence, publishing has been blocked under rule A3. Publishing will remain on hold until new evidence passes a re-audit or you choose to proceed by publishing with these specific gaps formally disclosed.",
+    "ts": "2026-10-18T21:23:17.261261Z"
+   },
+   {
+    "id": "d57c3d307fca",
+    "from_agent": "supervisor",
+    "to_agent": "END",
+    "type": "decision",
+    "content": {
+     "next": "END",
+     "gate": null,
+     "source": "arbitration",
+     "guardrail": null
+    },
+    "reasoning": "A3: publishing blocked until the missing proof arrives or the organizer decides.",
+    "ts": "2026-10-18T21:23:17.600457Z"
+   },
+   {
+    "id": "e11db36f0d15",
+    "from_agent": "human",
+    "to_agent": "supervisor",
+    "type": "decision",
+    "content": {
+     "action": "publish_with_gaps"
+    },
+    "reasoning": "Organizer chose to publish the ROI report with the gaps disclosed.",
+    "ts": "2026-10-18T21:24:16.762750Z"
+   },
+   {
+    "id": "a306cb1dcd1f",
+    "from_agent": "supervisor",
+    "to_agent": "human_approval",
+    "type": "decision",
+    "content": {
+     "next": "human_approval",
+     "gate": "roi_publish",
+     "source": "arbitration",
+     "guardrail": null
+    },
+    "reasoning": "A3: organizer chose to publish with gaps disclosed; approval still required.",
+    "ts": "2026-10-18T21:24:18.223542Z"
+   },
+   {
+    "id": "9e1a1870c974",
+    "from_agent": "human",
+    "to_agent": "supervisor",
+    "type": "decision",
+    "content": {
+     "gate": "roi_publish",
+     "decision": "approve",
+     "edits": {},
+     "in_reply_to": [
+      "eaedfc5e597d",
+      "600071177667"
+     ]
+    },
+    "reasoning": "Organizer chose to approve the roi_publish gate.",
+    "ts": "2026-10-18T21:25:30.824435Z"
+   },
+   {
+    "id": "a6855e7d7811",
+    "from_agent": "roi_audit",
+    "to_agent": "proposal",
+    "type": "result",
+    "content": {
+     "reason": "calibration",
+     "category": "cafe",
+     "event_factor": 0.0,
+     "factor": 0.0,
+     "n_events": 1,
+     "actual_footfall": 1500
+    },
+    "reasoning": "Approved report: cafe sponsors got 0% of the estimated reach from verified deliverables; future cafe estimates use x0.00 (1 event(s)).",
+    "ts": "2026-10-18T21:25:29.984152Z"
+   },
+   {
+    "id": "2bc6592ea61f",
+    "from_agent": "roi_audit",
+    "to_agent": "proposal",
+    "type": "result",
+    "content": {
+     "reason": "calibration",
+     "category": "coaching",
+     "event_factor": 0.0,
+     "factor": 0.0,
+     "n_events": 1,
+     "actual_footfall": 1500
+    },
+    "reasoning": "Approved report: coaching sponsors got 0% of the estimated reach from verified deliverables; future coaching estimates use x0.00 (1 event(s)).",
+    "ts": "2026-10-18T21:25:30.320754Z"
+   },
+   {
+    "id": "f41f04426e9c",
+    "from_agent": "roi_audit",
+    "to_agent": "proposal",
+    "type": "result",
+    "content": {
+     "reason": "calibration",
+     "category": "bakery",
+     "event_factor": 0.0,
+     "factor": 0.0,
+     "n_events": 1,
+     "actual_footfall": 1500
+    },
+    "reasoning": "Approved report: bakery sponsors got 0% of the estimated reach from verified deliverables; future bakery estimates use x0.00 (1 event(s)).",
+    "ts": "2026-10-18T21:25:30.656811Z"
+   },
+   {
+    "id": "28a40eb62d4a",
+    "from_agent": "supervisor",
+    "to_agent": "END",
+    "type": "decision",
+    "content": {
+     "next": "END",
+     "gate": null,
+     "source": "llm",
+     "guardrail": null
+    },
+    "reasoning": "The ROI report has been published and calibration is complete with no further open requests or pending gates.",
+    "ts": "2026-10-18T21:25:33.567641Z"
+   }
+  ],
+  "pending_approval": null,
+  "phase": "done",
+  "step_count": 1,
+  "errors": [
+   {
+    "agent": "discovery",
+    "tool": "find_contact",
+    "error": "ToolInputError: unknown brand_id Chai Junction Cafe"
+   },
+   {
+    "agent": "discovery",
+    "tool": "pick_replacement",
+    "error": "ToolInputError: demo-crumbs-co-bakery is not an available alternative"
+   }
+  ],
+  "decision_log": [
+   {
+    "ts": "2026-10-18T21:01:46.311147+00:00",
+    "kind": "route",
+    "next": "discovery",
+    "gate": null,
+    "reason": "The discovery phase has just begun with no brands identified yet. The discovery agent needs to find and rank suitable local sponsors for Fergusson Fest 2026.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:02:39.480973+00:00",
+    "kind": "route",
+    "next": "human_approval",
+    "gate": "shortlist",
+    "reason": "Discovery has identified 5 good-fit brands, so the shortlist must now be submitted to the organizer for approval before proposals are generated.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:03:39.903418+00:00",
+    "kind": "route",
+    "next": "proposal",
+    "gate": null,
+    "reason": "The organizer approved the shortlist gate for 5 selected brands, moving the workflow into the proposals phase where pitch decks and sponsorship tiers must now be created.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:05:42.505564+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-chai-junction:insufficient",
+    "conflict": "Proposal v1 prices Chai Junction Cafe up to Rs 25,000; only 2 past accepted cafe deal(s) to compare with.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "insufficient data",
+    "justification": "With fewer than 3 past cafe deals there is no reliable benchmark, so the proposed price stands.",
+    "next": null,
+    "reason": "With fewer than 3 past cafe deals there is no reliable benchmark, so the proposed price stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:05:42.867728+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-bean-theory:insufficient",
+    "conflict": "Proposal v1 prices Bean Theory Cafe up to Rs 30,000; only 2 past accepted cafe deal(s) to compare with.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "insufficient data",
+    "justification": "With fewer than 3 past cafe deals there is no reliable benchmark, so the proposed price stands.",
+    "next": null,
+    "reason": "With fewer than 3 past cafe deals there is no reliable benchmark, so the proposed price stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:05:43.229611+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-ironcore-gym:insufficient",
+    "conflict": "Proposal v1 prices IronCore Gym up to Rs 35,000; only 0 past accepted gym deal(s) to compare with.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "insufficient data",
+    "justification": "With fewer than 3 past gym deals there is no reliable benchmark, so the proposed price stands.",
+    "next": null,
+    "reason": "With fewer than 3 past gym deals there is no reliable benchmark, so the proposed price stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:05:48.836315+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-apex-coaching:v1",
+    "conflict": "Proposal v1 prices Apex Coaching Classes up to Rs 48,000, but 3 accepted coaching deals have a median of Rs 10,000.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "Cap every tier at Rs 12,500 (1.25 x median) and ask Proposal for a revision.",
+    "justification": "Because three accepted coaching deals have a median of Rs 10,000, the proposed rate of up to Rs 48,000 for Apex Coaching Classes has been capped at Rs 12,500 (1.25 times the median) under rule A2. We have asked for a revised proposal within this limit to ensure the pricing aligns with past accepted benchmarks.",
+    "next": null,
+    "reason": "Because three accepted coaching deals have a median of Rs 10,000, the proposed rate of up to Rs 48,000 for Apex Coaching Classes has been capped at Rs 12,500 (1.25 times the median) under rule A2. We have asked for a revised proposal within this limit to ensure the pricing aligns with past accepted benchmarks.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:05:49.427431+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-pulsefit-gym:insufficient",
+    "conflict": "Proposal v1 prices PulseFit Gym up to Rs 35,000; only 0 past accepted gym deal(s) to compare with.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "insufficient data",
+    "justification": "With fewer than 3 past gym deals there is no reliable benchmark, so the proposed price stands.",
+    "next": null,
+    "reason": "With fewer than 3 past gym deals there is no reliable benchmark, so the proposed price stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:05:52.608320+00:00",
+    "kind": "route",
+    "next": "proposal",
+    "gate": null,
+    "reason": "There is an open revision request for demo-apex-coaching resulting from A2 price arbitration that needs to be resolved by the proposal agent.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:06:21.612722+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "Proposals have been drafted and revised, so the outreach agent must now critique them and prepare outreach emails.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 3
+   },
+   {
+    "ts": "2026-10-18T21:06:56.998734+00:00",
+    "kind": "route",
+    "next": "human_approval",
+    "gate": "send",
+    "reason": "All five proposal emails have been drafted and queued, requiring the organizer's approval at the send gate before outreach can dispatch them.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 4
+   },
+   {
+    "ts": "2026-10-18T21:08:03.376592+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "The organizer has approved the send gate, so outreach can now dispatch the queued emails to the sponsors.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:08:15.446412+00:00",
+    "kind": "route",
+    "next": "END",
+    "gate": null,
+    "reason": "All 5 approved proposal emails have been sent, and the system is now waiting for external replies from the sponsors.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:09:27.572913+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "There is an open request from the organizer directing outreach to poll for sponsor replies.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:10:23.282513+00:00",
+    "kind": "arbitration",
+    "rule": "A1",
+    "key": "demo-chai-junction",
+    "conflict": "Discovery ranked Chai Junction Cafe #1 (fit 0.95), but Outreach's email to it bounced.",
+    "agents": [
+     "discovery",
+     "outreach"
+    ],
+    "resolution": "Delivery evidence beats ranking: Chai Junction Cafe marked unreachable; Outreach's replacement request stands.",
+    "justification": "Although Chai Junction Cafe was ranked top with a 0.95 fit score, Outreach's email to them bounced. Because verified delivery issues take precedence over fit rankings, the cafe has been marked unreachable and Outreach's request for a replacement sponsor stands.",
+    "next": null,
+    "reason": "Although Chai Junction Cafe was ranked top with a 0.95 fit score, Outreach's email to them bounced. Because verified delivery issues take precedence over fit rankings, the cafe has been marked unreachable and Outreach's request for a replacement sponsor stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:10:29.748776+00:00",
+    "kind": "route",
+    "next": "proposal",
+    "gate": null,
+    "reason": "Proposal has an open revision request to adjust the pricing for Bean Theory following their budget pushback.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:11:00.400800+00:00",
+    "kind": "route",
+    "next": "discovery",
+    "gate": null,
+    "reason": "Discovery has an open request to find a replacement brand for Chai Junction after email delivery bounced.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 3
+   },
+   {
+    "ts": "2026-10-18T21:11:49.132447+00:00",
+    "kind": "route",
+    "next": "proposal",
+    "gate": null,
+    "reason": "Discovery identified Metro Wholesale as the replacement sponsor for Chai Junction; Proposal needs to create a sponsorship pitch and pricing tiers for it.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 4
+   },
+   {
+    "ts": "2026-10-18T21:11:54.409265+00:00",
+    "kind": "route",
+    "next": "discovery",
+    "gate": null,
+    "reason": "Discovery has an open request from Proposal to find a replacement brand after Metro Wholesale was deemed infeasible.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 5
+   },
+   {
+    "ts": "2026-10-18T21:13:10.696242+00:00",
+    "kind": "route",
+    "next": "proposal",
+    "gate": null,
+    "reason": "Discovery has selected Crumbs Bakery as the replacement brand; Proposal now needs to generate the sponsorship pitch and pricing tiers for it.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 6
+   },
+   {
+    "ts": "2026-10-18T21:13:35.467063+00:00",
+    "kind": "arbitration",
+    "rule": "A2",
+    "key": "demo-crumbs-bakery:insufficient",
+    "conflict": "Proposal v1 prices Crumbs & Co Bakery up to Rs 18,000; only 0 past accepted bakery deal(s) to compare with.",
+    "agents": [
+     "proposal",
+     "supervisor"
+    ],
+    "resolution": "insufficient data",
+    "justification": "With fewer than 3 past bakery deals there is no reliable benchmark, so the proposed price stands.",
+    "next": null,
+    "reason": "With fewer than 3 past bakery deals there is no reliable benchmark, so the proposed price stands.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:13:39.916453+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "Proposal generated the initial pitch for Crumbs Bakery; Outreach needs to critique the proposal before preparing it for organizer approval.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 7
+   },
+   {
+    "ts": "2026-10-18T21:14:21.759685+00:00",
+    "kind": "route",
+    "next": "human_approval",
+    "gate": "send",
+    "reason": "Draft outreach emails are prepared for review and require organizer approval under the send gate before outreach can dispatch them.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 8
+   },
+   {
+    "ts": "2026-10-18T21:15:21.165151+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "The organizer approved the send gate, so Outreach can now dispatch the queued emails.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:15:42.273311+00:00",
+    "kind": "route",
+    "next": "END",
+    "gate": null,
+    "reason": "All approved emails have been sent and there are no open requests or pending approvals, so the system waits for replies from contacted brands.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:16:46.973653+00:00",
+    "kind": "route",
+    "next": "outreach",
+    "gate": null,
+    "reason": "The organizer requested to check for replies, so Outreach needs to poll and classify incoming emails.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:17:17.719778+00:00",
+    "kind": "route",
+    "next": "END",
+    "gate": null,
+    "reason": "All replies have been polled and recorded, and there are no open requests, pending approvals, or escalations. The system should stop and wait for external events or organizer input.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:18:41.165744+00:00",
+    "kind": "route",
+    "next": "roi_audit",
+    "gate": null,
+    "reason": "The organizer requested a post-event ROI audit on the uploaded evidence items, so roi_audit must process this open request.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:23:17.092996+00:00",
+    "kind": "arbitration",
+    "rule": "A3",
+    "key": "2026-10-18T21:23:11.812190+00:00:blocked",
+    "conflict": "ROI Audit could not verify 11 promised deliverable(s): Bean Theory Cafe: 'Logo on the official printed event schedule posters displayed across campus' (ambiguous); Bean Theory Cafe: 'Space for one 6x3 ft branded standee placed near the central registration area (standee provided by cafe)' (ambiguous); Bean Theory Cafe: '1 collaborative Instagram feed post highlighting cafe menu specials and student discounts' (ambiguous); Bean Theory Cafe: 'Distribution of Bean Theory discount vouchers directly to all event prize winners' (ambiguous); Apex Coaching Classes: 'All Silver tier benefits included' (ambiguous); Apex Coaching Classes: 'Logo placement on the main stage backdrop banner' (ambiguous); Apex Coaching Classes: 'Dedicated 6x6 ft information desk near the registration desk for direct student counseling and lead collection' (ambiguous); Apex Coaching Classes: '2-minute podium address slot before the valedictory ceremony to introduce coaching scholarships' (missing); Crumbs & Co Bakery: 'Logo placement on official fest posters distributed across campus' (ambiguous); Crumbs & Co Bakery: '1 dedicated Instagram shoutout story on the official Fergusson Fest Instagram handle' (ambiguous); Crumbs & Co Bakery: 'Distribution of bakery discount coupons at the event registration counter' (ambiguous).",
+    "agents": [
+     "roi_audit",
+     "human"
+    ],
+    "resolution": "block publishing until new evidence passes a re-audit or the organizer publishes with gaps disclosed",
+    "justification": "Because the ROI audit could not verify 11 promised deliverables across Bean Theory Cafe, Apex Coaching Classes, and Crumbs & Co Bakery due to missing and ambiguous evidence, publishing has been blocked under rule A3. Publishing will remain on hold until new evidence passes a re-audit or you choose to proceed by publishing with these specific gaps formally disclosed.",
+    "next": null,
+    "reason": "Because the ROI audit could not verify 11 promised deliverables across Bean Theory Cafe, Apex Coaching Classes, and Crumbs & Co Bakery due to missing and ambiguous evidence, publishing has been blocked under rule A3. Publishing will remain on hold until new evidence passes a re-audit or you choose to proceed by publishing with these specific gaps formally disclosed.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:23:17.432893+00:00",
+    "kind": "route",
+    "next": "END",
+    "gate": null,
+    "reason": "A3: publishing blocked until the missing proof arrives or the organizer decides.",
+    "source": "arbitration",
+    "guardrail": null,
+    "step": 2
+   },
+   {
+    "ts": "2026-10-18T21:24:17.887189+00:00",
+    "kind": "arbitration",
+    "rule": "A3",
+    "key": "2026-10-18T21:23:11.812190+00:00:disclosed",
+    "conflict": "11 deliverable(s) still lack proof.",
+    "agents": [
+     "roi_audit",
+     "human"
+    ],
+    "resolution": "unblock: organizer chose to publish with the gaps disclosed",
+    "justification": "The organizer explicitly accepted publishing with every gap listed in the report.",
+    "next": null,
+    "reason": "The organizer explicitly accepted publishing with every gap listed in the report.",
+    "source": "code"
+   },
+   {
+    "ts": "2026-10-18T21:24:18.056197+00:00",
+    "kind": "route",
+    "next": "human_approval",
+    "gate": "roi_publish",
+    "reason": "A3: organizer chose to publish with gaps disclosed; approval still required.",
+    "source": "arbitration",
+    "guardrail": null,
+    "step": 1
+   },
+   {
+    "ts": "2026-10-18T21:25:33.400141+00:00",
+    "kind": "route",
+    "next": "END",
+    "gate": null,
+    "reason": "The ROI report has been published and calibration is complete with no further open requests or pending gates.",
+    "source": "llm",
+    "guardrail": null,
+    "step": 1
+   }
+  ],
+  "feedback": {
+   "demo-apex-coaching": [
+    "accepted"
+   ],
+   "demo-chai-junction": [
+    "bounced"
+   ],
+   "demo-bean-theory": [
+    "accepted"
+   ],
+   "demo-crumbs-bakery": [
+    "accepted"
+   ]
+  },
+  "revision_count": {
+   "demo-apex-coaching": 1,
+   "demo-bean-theory": 1
+  },
+  "publish_with_gaps": true,
+  "target_brand_count": 5,
+  "actual_footfall": 1500
+ },
+ "interrupt": null
 }
