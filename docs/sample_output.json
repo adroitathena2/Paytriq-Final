@@ -1,0 +1,651 @@
+{
+  "_provenance": "Produced by backend/tests/test_integration.py with scripted fakes (FakeLLM, fake Places and Gmail), NOT by Gemini. It shows the exact output schema of GET /runs/{run_id}. Replace with a response captured from the deployed system before submission.",
+  "run": {
+    "id": "a1381cfd-126b-4888-837a-9c98d3344151",
+    "event_id": "event-1",
+    "owner_id": "user-1",
+    "status": "completed",
+    "phase": "done",
+    "pending_gate": null,
+    "last_error": null,
+    "created_at": "2026-10-11T14:46:54.737686+00:00",
+    "updated_at": "2026-10-11T14:46:54.854250+00:00"
+  },
+  "values": {
+    "event_id": "event-1",
+    "event": {
+      "name": "TechFest 2026",
+      "college": "SIT Pune",
+      "date": "2026-11-20",
+      "expected_footfall": 1500,
+      "audience": "18-22 year old engineering students",
+      "budget_goal_inr": 150000,
+      "lat": 18.5204,
+      "lng": 73.8567
+    },
+    "brands": [
+      {
+        "id": "good-brew-cafe",
+        "name": "Good Brew Cafe",
+        "category": "cafe",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 0.4,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.85,
+        "fit_reason": "fits students"
+      },
+      {
+        "id": "good-grind-cafe",
+        "name": "Good Grind Cafe",
+        "category": "cafe",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 0.8,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.85,
+        "fit_reason": "fits students"
+      },
+      {
+        "id": "good-fit-gym",
+        "name": "Good Fit Gym",
+        "category": "gym",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 3.1,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.85,
+        "fit_reason": "fits students"
+      },
+      {
+        "id": "good-bakes",
+        "name": "Good Bakes",
+        "category": "bakery",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 3.5,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.85,
+        "fit_reason": "fits students"
+      },
+      {
+        "id": "good-crumbs",
+        "name": "Good Crumbs",
+        "category": "bakery",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 3.9,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.85,
+        "fit_reason": "fits students"
+      },
+      {
+        "id": "meh-gym",
+        "name": "Meh Gym",
+        "category": "gym",
+        "address": "FC Road",
+        "lat": 18.52,
+        "lng": 73.85,
+        "distance_km": 1.2,
+        "contact_email": "owner@shop.in",
+        "website": null,
+        "fit_score": 0.3,
+        "fit_reason": "weak overlap"
+      }
+    ],
+    "selected_brand_ids": [
+      "good-brew-cafe",
+      "good-grind-cafe",
+      "good-fit-gym",
+      "good-bakes"
+    ],
+    "proposals": {
+      "good-brew-cafe": {
+        "brand_id": "good-brew-cafe",
+        "version": 3,
+        "tiers": [
+          {
+            "name": "Bronze",
+            "price_inr": 4500,
+            "deliverables": [
+              "Logo on posters"
+            ],
+            "expected_reach": 450
+          },
+          {
+            "name": "Silver",
+            "price_inr": 9000,
+            "deliverables": [
+              "Logo on posters",
+              "Stall"
+            ],
+            "expected_reach": 830
+          },
+          {
+            "name": "Gold",
+            "price_inr": 15000,
+            "deliverables": [
+              "Logo on main stage banner",
+              "Stall",
+              "1 Instagram post"
+            ],
+            "expected_reach": 2480
+          }
+        ],
+        "pitch": "Good Brew Cafe meets 1500 students.",
+        "pdf_url": "https://files.test/good-brew-cafe-v3.pdf",
+        "status": "sent"
+      },
+      "good-grind-cafe": {
+        "brand_id": "good-grind-cafe",
+        "version": 2,
+        "tiers": [
+          {
+            "name": "Bronze",
+            "price_inr": 6000,
+            "deliverables": [
+              "Logo on posters"
+            ],
+            "expected_reach": 450
+          },
+          {
+            "name": "Silver",
+            "price_inr": 12000,
+            "deliverables": [
+              "Logo on posters",
+              "Stall"
+            ],
+            "expected_reach": 830
+          },
+          {
+            "name": "Gold",
+            "price_inr": 20000,
+            "deliverables": [
+              "Logo on main stage banner",
+              "Stall",
+              "1 Instagram post"
+            ],
+            "expected_reach": 2480
+          }
+        ],
+        "pitch": "Good Grind Cafe meets 1500 students.",
+        "pdf_url": "https://files.test/good-grind-cafe-v2.pdf",
+        "status": "declined"
+      },
+      "good-fit-gym": {
+        "brand_id": "good-fit-gym",
+        "version": 2,
+        "tiers": [
+          {
+            "name": "Bronze",
+            "price_inr": 6000,
+            "deliverables": [
+              "Logo on posters"
+            ],
+            "expected_reach": 450
+          },
+          {
+            "name": "Silver",
+            "price_inr": 12000,
+            "deliverables": [
+              "Logo on posters",
+              "Stall"
+            ],
+            "expected_reach": 830
+          },
+          {
+            "name": "Gold",
+            "price_inr": 20000,
+            "deliverables": [
+              "Logo on main stage banner",
+              "Stall",
+              "1 Instagram post"
+            ],
+            "expected_reach": 2480
+          }
+        ],
+        "pitch": "Good Fit Gym meets 1500 students.",
+        "pdf_url": "https://files.test/good-fit-gym-v2.pdf",
+        "status": "accepted"
+      },
+      "good-bakes": {
+        "brand_id": "good-bakes",
+        "version": 1,
+        "tiers": [
+          {
+            "name": "Bronze",
+            "price_inr": 4500,
+            "deliverables": [
+              "Logo on posters"
+            ],
+            "expected_reach": 450
+          },
+          {
+            "name": "Silver",
+            "price_inr": 9000,
+            "deliverables": [
+              "Logo on posters",
+              "Stall"
+            ],
+            "expected_reach": 830
+          },
+          {
+            "name": "Gold",
+            "price_inr": 15000,
+            "deliverables": [
+              "Logo on main stage banner",
+              "Stall",
+              "1 Instagram post"
+            ],
+            "expected_reach": 2480
+          }
+        ],
+        "pitch": "Good Bakes meets 1500 students.",
+        "pdf_url": "https://files.test/good-bakes-v1.pdf",
+        "status": "sent"
+      }
+    },
+    "outreach": {
+      "good-brew-cafe": {
+        "brand_id": "good-brew-cafe",
+        "thread_id": "thread-1",
+        "status": "sent",
+        "last_reply_class": "pushback_price",
+        "history": [
+          {
+            "type": "email_draft",
+            "kind": "initial",
+            "subject": "Sponsor TechFest 2026",
+            "body": "Hi Good Brew Cafe, please see the attached proposal.",
+            "version": 2,
+            "state": "sent",
+            "ts": "2026-10-11T14:46:54.757793+00:00"
+          },
+          {
+            "type": "sent",
+            "kind": "initial",
+            "gmail_message_id": "m-1",
+            "to": "team1@example.com",
+            "redirected_to_demo": true,
+            "subject": "[Paytriq demo -> Good Brew Cafe] Sponsor TechFest 2026",
+            "ts": "2026-10-11T14:46:54.773514+00:00"
+          },
+          {
+            "type": "reply",
+            "gmail_message_id": "r-thread-1-0",
+            "from": "owner@brand.in",
+            "text": "Too expensive for our budget right now.",
+            "bounce": false,
+            "ts": "2026-10-11T14:46:54.795073+00:00",
+            "message_id_header": "<r0@mail>"
+          },
+          {
+            "type": "classified",
+            "brand_id": "good-brew-cafe",
+            "label": "pushback_price",
+            "summary": "price too high",
+            "accepted_tier": null,
+            "constraint": "Keep every tier under Rs 15,000",
+            "max_price_inr": 15000,
+            "ts": "2026-10-11T14:46:54.795073+00:00"
+          },
+          {
+            "type": "email_draft",
+            "kind": "revised",
+            "subject": "Sponsor TechFest 2026",
+            "body": "Hi Good Brew Cafe, please see the attached proposal.",
+            "version": 3,
+            "state": "sent",
+            "ts": "2026-10-11T14:46:54.802082+00:00"
+          },
+          {
+            "type": "sent",
+            "kind": "revised",
+            "gmail_message_id": "m-4",
+            "to": "team1@example.com",
+            "redirected_to_demo": true,
+            "subject": "[Paytriq demo -> Good Brew Cafe] Sponsor TechFest 2026",
+            "ts": "2026-10-11T14:46:54.820082+00:00"
+          }
+        ]
+      },
+      "good-grind-cafe": {
+        "brand_id": "good-grind-cafe",
+        "thread_id": "thread-2",
+        "status": "declined",
+        "last_reply_class": "declined",
+        "history": [
+          {
+            "type": "email_draft",
+            "kind": "initial",
+            "subject": "Sponsor TechFest 2026",
+            "body": "Hi Good Grind Cafe, please see the attached proposal.",
+            "version": 2,
+            "state": "sent",
+            "ts": "2026-10-11T14:46:54.757793+00:00"
+          },
+          {
+            "type": "sent",
+            "kind": "initial",
+            "gmail_message_id": "m-2",
+            "to": "team2@example.com",
+            "redirected_to_demo": true,
+            "subject": "[Paytriq demo -> Good Grind Cafe] Sponsor TechFest 2026",
+            "ts": "2026-10-11T14:46:54.780409+00:00"
+          },
+          {
+            "type": "reply",
+            "gmail_message_id": "r-thread-2-0",
+            "from": "owner@brand.in",
+            "text": "Thanks, but not interested.",
+            "bounce": false,
+            "ts": "2026-10-11T14:46:54.795073+00:00",
+            "message_id_header": "<r0@mail>"
+          },
+          {
+            "type": "classified",
+            "brand_id": "good-grind-cafe",
+            "label": "declined",
+            "summary": "not interested this year",
+            "accepted_tier": null,
+            "constraint": null,
+            "max_price_inr": null,
+            "ts": "2026-10-11T14:46:54.795073+00:00"
+          }
+        ]
+      },
+      "good-fit-gym": {
+        "brand_id": "good-fit-gym",
+        "thread_id": "thread-3",
+        "status": "accepted",
+        "last_reply_class": "accepted",
+        "history": [
+          {
+            "type": "email_draft",
+            "kind": "initial",
+            "subject": "Sponsor TechFest 2026",
+            "body": "Hi Good Fit Gym, please see the attached proposal.",
+            "version": 2,
+            "state": "sent",
+            "ts": "2026-10-11T14:46:54.757793+00:00"
+          },
+          {
+            "type": "sent",
+            "kind": "initial",
+            "gmail_message_id": "m-3",
+            "to": "team1@example.com",
+            "redirected_to_demo": true,
+            "subject": "[Paytriq demo -> Good Fit Gym] Sponsor TechFest 2026",
+            "ts": "2026-10-11T14:46:54.787878+00:00"
+          },
+          {
+            "type": "reply",
+            "gmail_message_id": "r-thread-3-0",
+            "from": "owner@brand.in",
+            "text": "We will go with Gold, see you there!",
+            "bounce": false,
+            "ts": "2026-10-11T14:46:54.795073+00:00",
+            "message_id_header": "<r0@mail>"
+          },
+          {
+            "type": "classified",
+            "brand_id": "good-fit-gym",
+            "label": "accepted",
+            "summary": "accepted Gold",
+            "accepted_tier": "Gold",
+            "constraint": null,
+            "max_price_inr": null,
+            "ts": "2026-10-11T14:46:54.795073+00:00"
+          },
+          {
+            "type": "accepted",
+            "tier": "Gold",
+            "ts": "2026-10-11T14:46:54.795073+00:00"
+          }
+        ]
+      },
+      "good-bakes": {
+        "brand_id": "good-bakes",
+        "thread_id": "thread-5",
+        "status": "sent",
+        "last_reply_class": null,
+        "history": [
+          {
+            "type": "email_draft",
+            "kind": "initial",
+            "subject": "Sponsor TechFest 2026",
+            "body": "Hi Good Bakes, please see the attached proposal.",
+            "version": 1,
+            "state": "sent",
+            "ts": "2026-10-11T14:46:54.802082+00:00"
+          },
+          {
+            "type": "sent",
+            "kind": "initial",
+            "gmail_message_id": "m-5",
+            "to": "team2@example.com",
+            "redirected_to_demo": true,
+            "subject": "[Paytriq demo -> Good Bakes] Sponsor TechFest 2026",
+            "ts": "2026-10-11T14:46:54.828081+00:00"
+          }
+        ]
+      }
+    },
+    "evidence": [
+      {
+        "id": "ev1",
+        "brand_id": "good-fit-gym",
+        "kind": "photo",
+        "storage_path": "a1381cfd-126b-4888-837a-9c98d3344151/banner.jpg",
+        "mime_type": "image/jpeg",
+        "note": "clear: Logo on main stage banner"
+      }
+    ],
+    "roi_report": {
+      "event": {
+        "name": "TechFest 2026",
+        "college": "SIT Pune",
+        "date": "2026-11-20",
+        "expected_footfall": 1500
+      },
+      "generated_at": "2026-10-11T14:46:54.846358+00:00",
+      "sponsors": [
+        {
+          "brand_id": "good-fit-gym",
+          "name": "Good Fit Gym",
+          "tier": "Gold",
+          "price_inr": 20000,
+          "expected_reach": 2480,
+          "deliverables": [
+            "Logo on main stage banner",
+            "Stall",
+            "1 Instagram post"
+          ],
+          "checks": [
+            {
+              "deliverable": "Logo on main stage banner",
+              "status": "verified",
+              "confidence": 0.95,
+              "explanation": "clearly visible",
+              "evidence_ids": [
+                "ev1"
+              ]
+            },
+            {
+              "deliverable": "Stall",
+              "status": "missing",
+              "confidence": 0.9,
+              "explanation": "not shown",
+              "evidence_ids": []
+            },
+            {
+              "deliverable": "1 Instagram post",
+              "status": "missing",
+              "confidence": 0.9,
+              "explanation": "not shown",
+              "evidence_ids": []
+            }
+          ],
+          "delivered": 1,
+          "total": 3,
+          "delivery_rate": 0.33
+        }
+      ],
+      "overall_delivery_rate": 0.33,
+      "disclosed_gaps": [
+        {
+          "brand_id": "good-fit-gym",
+          "brand_name": "Good Fit Gym",
+          "deliverable": "Stall",
+          "status": "missing",
+          "explanation": "not shown"
+        },
+        {
+          "brand_id": "good-fit-gym",
+          "brand_name": "Good Fit Gym",
+          "deliverable": "1 Instagram post",
+          "status": "missing",
+          "explanation": "not shown"
+        }
+      ],
+      "evidence_requests": [
+        "Please upload a clear photo of: Stall",
+        "Please upload a clear photo of: 1 Instagram post"
+      ],
+      "summary": "1 of 3 deliverables verified.",
+      "published": true,
+      "organizer_note": null
+    },
+    "messages": [
+      {
+        "id": "ef99b35b026a",
+        "from_agent": "supervisor",
+        "to_agent": "END",
+        "type": "decision",
+        "content": {
+          "next": "END",
+          "gate": null,
+          "source": "llm",
+          "guardrail": null
+        },
+        "reasoning": "phase awaiting_replies",
+        "ts": "2026-10-11T14:46:54.830185Z"
+      },
+      {
+        "id": "2b1183610b87",
+        "from_agent": "human",
+        "to_agent": "roi_audit",
+        "type": "request",
+        "content": {
+          "action": "audit"
+        },
+        "reasoning": "event is over",
+        "ts": "2026-10-11T14:46:54.836083Z"
+      },
+      {
+        "id": "9fba724740b1",
+        "from_agent": "supervisor",
+        "to_agent": "roi_audit",
+        "type": "decision",
+        "content": {
+          "next": "roi_audit",
+          "gate": null,
+          "source": "llm",
+          "guardrail": null
+        },
+        "reasoning": "roi_audit has 1 open request(s)",
+        "ts": "2026-10-11T14:46:54.839034Z"
+      },
+      {
+        "id": "7441b646ad43",
+        "from_agent": "roi_audit",
+        "to_agent": "human",
+        "type": "escalation",
+        "content": {
+          "gaps": 2,
+          "requests": [
+            "Please upload a clear photo of: Stall",
+            "Please upload a clear photo of: 1 Instagram post"
+          ],
+          "overall_delivery_rate": 0.33
+        },
+        "reasoning": "2 deliverable(s) could not be verified; asking for specific evidence instead of guessing.",
+        "ts": "2026-10-11T14:46:54.846358Z"
+      },
+      {
+        "id": "57a6d1643514",
+        "from_agent": "roi_audit",
+        "to_agent": "supervisor",
+        "type": "result",
+        "content": {
+          "overall_delivery_rate": 0.33,
+          "gaps": 2,
+          "in_reply_to": [
+            "2b1183610b87"
+          ]
+        },
+        "reasoning": "1 of 3 deliverables verified.",
+        "ts": "2026-10-11T14:46:54.846358Z"
+      },
+      {
+        "id": "d47cb763c4a9",
+        "from_agent": "supervisor",
+        "to_agent": "human_approval",
+        "type": "decision",
+        "content": {
+          "next": "human_approval",
+          "gate": "roi_publish",
+          "source": "llm",
+          "guardrail": null
+        },
+        "reasoning": "1 of 3 deliverables verified; publish with the gaps disclosed rather than wait",
+        "ts": "2026-10-11T14:46:54.847353Z"
+      },
+      {
+        "id": "00bc4033eef1",
+        "from_agent": "human",
+        "to_agent": "supervisor",
+        "type": "decision",
+        "content": {
+          "gate": "roi_publish",
+          "decision": "approve",
+          "edits": {},
+          "in_reply_to": [
+            "7441b646ad43"
+          ]
+        },
+        "reasoning": "Organizer chose to approve the roi_publish gate.",
+        "ts": "2026-10-11T14:46:54.851344Z"
+      },
+      {
+        "id": "15c9a5aaf31b",
+        "from_agent": "supervisor",
+        "to_agent": "END",
+        "type": "decision",
+        "content": {
+          "next": "END",
+          "gate": null,
+          "source": "llm",
+          "guardrail": null
+        },
+        "reasoning": "phase done",
+        "ts": "2026-10-11T14:46:54.852344Z"
+      }
+    ],
+    "pending_approval": null,
+    "phase": "done",
+    "step_count": 1,
+    "errors": []
+  },
+  "interrupt": null
+}

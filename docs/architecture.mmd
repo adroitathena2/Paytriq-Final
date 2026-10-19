@@ -1,0 +1,55 @@
+flowchart LR
+  O["Organizer<br/>(React UI on Vercel)"]
+  R["FastAPI run manager<br/>(Render)"]
+
+  subgraph G["LangGraph StateGraph (one thread per run)"]
+    S{{"LLM supervisor: routing,<br/>arbitration A1–A3, decision log"}}
+    H["human_approval interrupt()<br/>gates: shortlist, send, roi_publish"]
+    BB[("EventState blackboard<br/>messages bus, brands, proposals,<br/>threads, report, decision_log")]
+    subgraph W["4 worker agents"]
+      D["Discovery & Ranking"]
+      P["Proposal"]
+      OU["Outreach"]
+      RA["ROI Audit"]
+    end
+  end
+
+  X1[("Tool: Google Places /<br/>OSM Overpass")]
+  X3[("Tool: Gmail API")]
+  X2[("Tool: ReportLab PDF")]
+  X4[("Tool: Gemini Vision")]
+  X5[("Tool: Gemini Flash<br/>(supervisor + every agent:<br/>function calling, JSON output)")]
+  X6[("Tool: Supabase Postgres,<br/>Storage, Auth")]
+  X7[("Tool: Cloudflare Clef<br/>(judgement: P(yes) for L6, L7)")]
+
+  O -- "create event, approve gates,<br/>poll replies, upload evidence" --> R
+  R -- "invoke / resume" --> S
+  S -- "next = agent" --> W
+  W -- "results + AgentMessages" --> BB
+  BB -- "open requests, state" --> S
+  S -- "open gate" --> H
+  H -- "organizer decision" --> S
+  H -- "approval card" --> O
+
+  D -- "L1 replan (self)" --> D
+  OU -- "L2 revision_request (critique)" --> P
+  OU -- "L3 revision_request (pushback)" --> P
+  OU -- "L4 request: replacement" --> D
+  OU -- "L6 request: category_feedback" --> D
+  P -- "L7 request: infeasible" --> D
+  RA -- "L8 result: calibration" --> P
+  RA -- "L5 escalation: missing evidence" --> O
+
+  S -- "A1 bounce beats ranking:<br/>replacement request" --> D
+  S -- "A2 price vs past deals:<br/>price-cap revision" --> P
+  S -- "A3 missing proof:<br/>blocks roi_publish" --> O
+
+  D -- "search nearby" --> X1
+  P -- "render tiers" --> X2
+  OU -- "send, read threads" --> X3
+  RA -- "photos + links" --> X4
+  S -- "routing, justification" --> X5
+  W --> X5
+  BB -- "checkpoints, trace, deals,<br/>calibration, PDFs, evidence" --> X6
+  X7 -. "P(yes): L6 stop this category?" .-> OU
+  X7 -. "P(yes): L7 does any deliverable fit?" .-> P
