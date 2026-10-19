@@ -329,21 +329,26 @@ The CA2 review (Exam Studio, approved project page) said:
 
 Paytriq now has eight loops in which one agent's output changes what another does, and three conflicts the
 supervisor arbitrates (sections 5 and 5.1). Three examples from the committed real trace
-(`traces/[[TRACE FILE: YYYY-MM-DD-demo-mode-full-run.json]]`):
+(`traces/2026-10-19-demo-mode-full-run.json`):
 
 1. **Outreach's findings change what Proposal does next (L3).** A brand replied that its budget was capped. Outreach
    classified the reply as `pushback_price` and posted a `revision_request` with `source: brand_reply`
-   ([[TRACE: L3 revision_request message id + ts]]). Proposal answered with version 2 under the brand's cap
-   ([[TRACE: Proposal result message id + ts, v2 prices]]), and the organizer approved the revised email at the send
+   (message `1c395e902b4b`, trace #650, 2026-10-18T21:09:59Z). Proposal answered with version 2 under the brand's cap
+   (result `0b00d1d4e248`, trace #667, 2026-10-18T21:10:55Z: Gold Rs 8,000 / Silver Rs 5,000 / Bronze Rs 3,000), and
+   the organizer approved the revised email at the send
    gate.
 2. **A bounce overrides Discovery's ranking (A1).** Discovery ranked a cafe in its top 3
-   ([[TRACE: Discovery result / shortlist rank]]), but Outreach's email to it bounced. The supervisor's rule A1
-   marked it unreachable and the replacement went ahead ([[TRACE: A1 arbitration decision ts + justification]];
-   [[TRACE: L4 replacement request id]]).
+   (result `54941b61c877`, trace #541, 2026-10-18T21:02:36Z), but Outreach's email to it bounced. The supervisor's
+   rule A1 marked it unreachable and the replacement went ahead (arbitration trace #657, 2026-10-18T21:10:23Z:
+   "Discovery ranked Chai Junction Cafe #1 (fit 0.95), but Outreach's email to it bounced." -> "Delivery evidence
+   beats ranking: Chai Junction Cafe marked unreachable; Outreach's replacement request stands.";
+   L4 request `16aa8c5c9241`, trace #653, 2026-10-18T21:10:05Z).
 3. **The supervisor caps a price against past deals (A2).** Proposal priced the coaching centre above what this
    organizer's past coaching sponsors accepted. A2 capped it at 1.25 x the median and sent a `revision_request` with
-   `source: arbitration` ([[TRACE: A2 arbitration decision ts, median, cap]]; [[TRACE: A2 revision_request id]]),
-   and Proposal produced a capped version ([[TRACE: Proposal v2 result id + prices]]).
+   `source: arbitration` (arbitration trace #602, 2026-10-18T21:05:48Z: median Rs 10,000, cap Rs 12,500;
+   revision_request `f5e2d15de8db`, trace #603, 2026-10-18T21:05:49Z),
+   and Proposal produced a capped version (result `3779dcb43498`, trace #614, 2026-10-18T21:06:16Z: v2 Gold
+   Rs 12,000 / Silver Rs 9,000 / Bronze Rs 6,000).
 
 Ids and timestamps above are filled in from `python backend/scripts/verify_trace.py traces/<file>.json` on the
 committed trace; nothing in this section is written from memory.
