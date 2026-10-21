@@ -150,6 +150,39 @@ async def test_two_gym_declines_send_category_feedback_to_discovery(make_deps, s
     assert not [m for m in again["messages"] if m.content.get("reason") == "category_feedback"]  # told once
 
 
+async def test_declines_are_handled_even_when_the_tool_budget_runs_out(make_deps, settings):
+    """Regression (2026-10-19 trace): with many replies, poll + classify + one action per brand needs more
+    than the 6 tool calls an agent turn allows. Declines the LLM never got to must still be recorded and
+    replaced, or the threads stay "replied", nothing reaches Discovery and L6 never fires."""
+    gmail = FakeGmail(settings)
+    replies = ["Looks nice but too expensive for our budget.", "We will go with Silver!", "We will go with Gold!",
+               "We will go with Bronze!", "Sorry, not interested this year.", "Thanks, but not interested."]
+    ids = [f"b{i}" for i in range(1, 7)]
+    sent_ts = (datetime.now(UTC) - timedelta(days=0.5)).isoformat()
+    threads = {}
+    for i, (b, text) in enumerate(zip(ids, replies, strict=True)):
+        threads[b] = thread(b, status="sent", thread_id=f"thread-{i + 1}")
+        threads[b].history.append({"type": "sent", "kind": "initial", "gmail_message_id": f"m-{i}",
+                                   "subject": "Sponsor", "ts": sent_ts})
+        gmail.reply(f"thread-{i + 1}", text)
+    poll = new_message("human", "outreach", "request", {"action": "poll_replies"}, "check replies")
+    s = state(brands=[brand(1), brand(2), brand(3), brand(4), brand(5, category="gym"), brand(6, category="gym")],
+              selected_brand_ids=ids, proposals={b: proposal(b, status="sent") for b in ids}, outreach=threads,
+              phase="replies", messages=[poll])
+    update = await outreach.run(s, make_deps(llm(), gmail=gmail))
+
+    out = update["outreach"]
+    assert out["b5"].status == "declined" and out["b6"].status == "declined"
+    assert update["feedback"]["b5"] == ["declined"] and update["feedback"]["b6"] == ["declined"]
+    assert update["proposals"]["b5"].status == "declined"
+    replacements = {m.content["brand_id"] for m in by_type(update, "request")
+                    if m.content.get("reason") == "replacement"}
+    assert replacements == {"b5", "b6"}  # L4 for both gyms
+    [category] = [m for m in by_type(update, "request") if m.content.get("reason") == "category_feedback"]
+    assert category.content["category"] == "gym"  # L6
+    assert update["phase"] == "proposals"  # b1's pushback is waiting on the Proposal agent
+
+
 def gym_workspace(feedback: dict, messages=()) -> outreach.Workspace:
     brands = [brand(1, category="gym"), brand(2, category="gym"), brand(3, category="gym"), brand(4)]
     return outreach.Workspace(state(brands=brands, feedback=feedback, messages=list(messages)))

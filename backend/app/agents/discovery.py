@@ -5,9 +5,11 @@ radius), ``score_brands`` (LLM fit scoring for the audience) and ``find_contact`
 the brand's website), observing each result, until it calls ``finish``.
 
 Adaptation:
-- L1 self-replan. After a pass, if fewer than ``GOOD_TARGET`` brands score >= ``GOOD_FIT``, the agent
-  asks the LLM for a replan (wider radius, at most 4 km; adjacent categories), posts a ``replan`` message
-  explaining why, and runs another pass. At most ``MAX_REPLANS`` times.
+- L1 self-replan. The first pass searches at most ``START_RADIUS_KM``. After a pass, if fewer than
+  ``GOOD_TARGET`` brands score >= ``GOOD_FIT``, the agent asks the LLM for a replan (wider radius, at most
+  4 km; adjacent categories), posts a ``replan`` message explaining why, and runs another pass with the
+  radius cap raised to the plan's radius. At most ``MAX_REPLANS`` times. So every widening of the search
+  is a traced ``replan`` decision, never a silent step inside one pass.
 - Tool failure: a failed search is an observation; the LLM can retry differently. Places itself falls
   back from Google to OpenStreetMap. If nothing at all is found, the agent escalates to the organizer.
 - Organizer feedback: a rejected shortlist arrives as a ``request`` with feedback that is put in front
@@ -39,6 +41,7 @@ GOOD_FIT = 0.6
 GOOD_TARGET = 5
 MAX_REPLANS = 2
 MAX_RADIUS_KM = 4.0
+START_RADIUS_KM = 2.0
 CATEGORY_PENALTY = 0.6
 REPLACE_REASONS = ("replacement", "infeasible")
 ADJACENT = {
@@ -53,8 +56,10 @@ college campus that would sponsor a student event, and rank how well each fits t
 Goal: at least {GOOD_TARGET} brands with fit_score >= {GOOD_FIT}, ideally with a contact email.
 Work step by step with your tools: choose categories that match the audience, search, score, and look up
 contacts for promising brands that lack an email. If a tool fails, adapt (different categories, smaller
-query) rather than repeating the same call. Call finish with a short summary when done.
-Known categories: {", ".join(sorted(CATEGORIES))}. Never search wider than {MAX_RADIUS_KM} km."""
+query) rather than repeating the same call. Always refer to brands by their id (e.g. "demo-bean-theory"),
+as shown in tool results. Call finish with a short summary when done.
+Known categories: {", ".join(sorted(CATEGORIES))}. Never search wider than the max_radius_km you are given;
+if that is not enough, finish and the agent will decide whether to replan wider."""
 
 
 class BrandScore(BaseModel):
@@ -83,8 +88,14 @@ class Workspace:
         self.searches: list[dict] = []
         self.picked: str | None = None
         self.pick_reason = ""
-
+        self.radius_cap = MAX_RADIUS_KM  # discovery passes lower this to START_RADIUS_KM until a replan
         self.penalised: set[str] = set()  # categories down-weighted after negative outreach outcomes
+
+    def lookup(self, key: str) -> Brand | None:
+        """Find a candidate by id, or by exact name (case-insensitive) when the LLM passes the name."""
+        if key in self.candidates:
+            return self.candidates[key]
+        return next((b for b in self.candidates.values() if b.name.lower() == key.strip().lower()), None)
 
     def good(self) -> list[Brand]:
         return sorted((b for b in self.candidates.values() if b.fit_score >= GOOD_FIT and not b.unreachable),
@@ -100,15 +111,19 @@ def build_tools(deps, ws: Workspace, guidance: str = "", excluded: set[str] | No
     excluded = excluded or set()
 
     async def search_places(categories: list[str], radius_km: float = 2.0) -> dict:
-        radius = max(0.5, min(float(radius_km), MAX_RADIUS_KM))
+        radius = max(0.5, min(float(radius_km), ws.radius_cap))
         result = await deps.places.search(ws.event["lat"], ws.event["lng"], radius, list(categories))
         new = [p for p in result["places"] if p.id not in ws.candidates]
         for p in new:
             ws.candidates[p.id] = p
         ws.searches.append({"categories": categories, "radius_km": radius, "source": result["source"], "found": len(new)})
-        return {"source": result["source"], "fallback_reason": result["fallback_reason"], "radius_km": radius,
-                "new_brands": len(new), "total_candidates": len(ws.candidates),
-                "sample": [f"{p.name} ({p.category}, {p.distance_km} km)" for p in new[:8]]}
+        out = {"source": result["source"], "fallback_reason": result["fallback_reason"], "radius_km": radius,
+               "new_brands": len(new), "total_candidates": len(ws.candidates),
+               "sample": [f"{p.id}: {p.name} ({p.category}, {p.distance_km} km)" for p in new[:8]]}
+        if float(radius_km) > ws.radius_cap:
+            out["note"] = (f"radius capped at {ws.radius_cap} km for this pass; finish if that is not enough "
+                           "and the agent will decide whether to replan wider")
+        return out
 
     async def score_brands(rescore_all: bool = False) -> dict:
         todo = [b for b in ws.candidates.values() if rescore_all or b.id not in ws.scored][:40]
@@ -130,12 +145,13 @@ def build_tools(deps, ws: Workspace, guidance: str = "", excluded: set[str] | No
                 ws.scored.add(s.id)
         good = ws.good()
         return {"scored": len(batch.scores), "good_fit": len(good),
-                "top": [f"{b.name}: {b.fit_score}" for b in good[:6]]}
+                "top": [f"{b.id}: {b.name} {b.fit_score}" for b in good[:6]]}
 
     async def find_contact(brand_id: str) -> dict:
-        brand = ws.candidates.get(brand_id)
+        brand = ws.lookup(brand_id)
         if brand is None:
-            raise ToolInputError(f"unknown brand_id {brand_id}")
+            raise ToolInputError(f"unknown brand_id {brand_id}; use an id from the search results")
+        brand_id = brand.id
         if brand.contact_email:
             return {"brand_id": brand_id, "email": brand.contact_email, "note": "already known"}
         if not brand.website:
@@ -150,17 +166,19 @@ def build_tools(deps, ws: Workspace, guidance: str = "", excluded: set[str] | No
                              "has_email": bool(b.contact_email), "distance_km": b.distance_km} for b in options]}
 
     async def pick_replacement(brand_id: str, why: str = "") -> dict:
-        if brand_id not in ws.candidates or brand_id in excluded:
-            raise ToolInputError(f"{brand_id} is not an available alternative")
-        ws.picked, ws.pick_reason = brand_id, why
-        return {"picked": ws.candidates[brand_id].name}
+        brand = ws.lookup(brand_id)
+        if brand is None or brand.id in excluded:
+            available = [b.id for b in ws.ranked() if b.id not in excluded][:6]
+            raise ToolInputError(f"{brand_id} is not an available alternative; available ids: {', '.join(available)}")
+        ws.picked, ws.pick_reason = brand.id, why
+        return {"picked": brand.name, "brand_id": brand.id}
 
     string_list = {"type": "array", "items": {"type": "string"}}
     tools = [
         AgentTool(ToolSpec(name="search_places", description="Search businesses near the campus.", parameters={
             "type": "object", "properties": {
                 "categories": {**string_list, "description": f"Any of: {', '.join(sorted(CATEGORIES))}"},
-                "radius_km": {"type": "number", "description": f"0.5 to {MAX_RADIUS_KM}"}},
+                "radius_km": {"type": "number", "description": "0.5 up to max_radius_km for this pass"}},
             "required": ["categories", "radius_km"]}), search_places, timeout=150),
         AgentTool(ToolSpec(name="score_brands", description="Score fit (0-1) of unscored candidates with the LLM.",
                            parameters={"type": "object", "properties": {"rescore_all": {"type": "boolean"}}}),
@@ -211,11 +229,12 @@ async def run(state: EventState, deps) -> dict:
 
 async def _discover(state: EventState, deps, feedback: str, request_ids: list[str]) -> dict:
     ws = Workspace(state)
+    ws.radius_cap = START_RADIUS_KM  # only a replan may widen the search (L1)
     tools = build_tools(deps, ws, guidance=feedback)
     messages, errors = [], list(state.get("errors", []))
     context: dict = {"task": "discover_and_rank", "event": ws.event, "organizer_feedback": feedback or None,
-                     "known_brands": len(ws.candidates), "suggested_radius_km": 2.0}
-    radius, categories_used = 2.0, []
+                     "known_brands": len(ws.candidates), "max_radius_km": ws.radius_cap}
+    radius, categories_used = START_RADIUS_KM, []
 
     for attempt in range(MAX_REPLANS + 1):
         result = await run_tool_loop(deps, AGENT, "discovery.plan", SYSTEM, context, tools)
@@ -229,7 +248,8 @@ async def _discover(state: EventState, deps, feedback: str, request_ids: list[st
             "attempt": attempt + 1, "good_fit": len(ws.good()), "target": GOOD_TARGET,
             "new_radius_km": plan.radius_km, "extra_categories": plan.extra_categories,
         }, plan.reasoning))
-        context = {**context, "replan": {"attempt": attempt + 1, "radius_km": plan.radius_km,
+        ws.radius_cap = plan.radius_km
+        context = {**context, "max_radius_km": ws.radius_cap, "replan": {"attempt": attempt + 1, "radius_km": plan.radius_km,
                                           "categories": sorted(set(categories_used) | set(plan.extra_categories)),
                                           "why": plan.reasoning}}
 

@@ -4,7 +4,16 @@ from app.agents import discovery
 from app.core.llm import FakeLLM, LLMError
 from app.graph.messages import new_message
 from tests.factories import brand, state
-from tests.fakes import FakePlaces, discovery_plan, discovery_replace, failing, make_brand, score_by_name
+from tests.fakes import (
+    FakePlaces,
+    call,
+    discovery_plan,
+    discovery_replace,
+    failing,
+    make_brand,
+    score_by_name,
+    tools_used,
+)
 
 REPLAN = {"radius_km": 4, "extra_categories": ["bakery"], "reasoning": "only 2 good cafes within 2 km; widen"}
 
@@ -60,6 +69,80 @@ async def test_replan_without_llm_widens_deterministically(make_deps):
     replan = next(m for m in update["messages"] if m.type == "replan")
     assert replan.content["new_radius_km"] == 4
     assert {"bakery", "restaurant"} <= set(replan.content["extra_categories"])
+
+
+def eager_widener(ctx: dict) -> dict:
+    """An LLM that asks for 3.5 km straight away, as Gemini did in the 2026-10-19 trace."""
+    used = tools_used(ctx)
+    if not used:
+        return call("search_places", categories=["cafe", "gym"], radius_km=3.5)
+    if "score_brands" not in used:
+        return call("score_brands")
+    return call("finish", summary="done")
+
+
+async def test_first_pass_cannot_widen_without_a_replan(make_deps):
+    """L1: widening past 2 km is always a traced replan, never a silent step inside the first pass."""
+    def results(radius, categories):
+        near = [make_brand("Good Cafe 1"), make_brand("Good Cafe 2"), make_brand("Meh Gym")]
+        return near if radius <= 2 else near + [make_brand(f"Good Bakery {i}", "bakery", km=3.2) for i in range(3)]
+
+    fake = FakeLLM(decide={"discovery.plan": eager_widener},
+                   generate={"discovery.score": score_by_name, "discovery.replan": REPLAN})
+    places = FakePlaces(results)
+    update = await discovery.run(state(), make_deps(fake, places=places))
+
+    assert places.calls[0]["radius_km"] == discovery.START_RADIUS_KM
+    first_search = next(c for c in fake.calls if c["purpose"] == "discovery.plan" and c["context"]["observations"])
+    assert "capped at 2.0 km" in first_search["context"]["observations"][0]["result"]["note"]
+    [replan] = [m for m in update["messages"] if m.type == "replan"]
+    assert replan.content["good_fit"] == 2
+    assert places.calls[1]["radius_km"] == 3.5  # allowed once the replan raised the cap to 4 km
+    assert sum(b.fit_score >= 0.6 for b in update["brands"]) == 5
+
+
+async def test_tool_results_carry_ids_and_names_are_resolved(make_deps):
+    """The LLM sees brand ids in search/score results; a name passed instead of an id still works."""
+    def by_name(ctx: dict) -> dict:
+        used = tools_used(ctx)
+        if not used:
+            return call("search_places", categories=["cafe"], radius_km=2)
+        if "score_brands" not in used:
+            return call("score_brands")
+        if "find_contact" not in used:
+            return call("find_contact", brand_id="Good Cafe 0")
+        return call("finish", summary="done")
+
+    fake = FakeLLM(decide={"discovery.plan": by_name}, generate={"discovery.score": score_by_name})
+    places = FakePlaces(lambda r, c: [make_brand(f"Good Cafe {i}") for i in range(5)])
+    await discovery.run(state(), make_deps(fake, places=places))
+
+    observations = fake.calls[-1]["context"]["observations"]
+    search, score, contact = (o["result"] for o in observations)
+    assert search["sample"][0].startswith("good-cafe-0: Good Cafe 0")
+    assert score["top"][0].startswith("good-cafe-")
+    assert contact["ok"] and contact["brand_id"] == "good-cafe-0"
+
+
+async def test_wrong_replacement_id_lists_the_valid_ones(make_deps):
+    """A mistyped id gets an error naming the available ids, so the LLM can correct itself."""
+    def typo_then_fix(ctx: dict) -> dict:
+        used = tools_used(ctx)
+        if not used:
+            return call("pick_replacement", brand_id="b-two")
+        if used == ["pick_replacement"]:
+            return call("pick_replacement", brand_id="b2", why="fixed the id")
+        return call("finish", summary="done")
+
+    request = new_message("outreach", "discovery", "request", {"reason": "replacement", "brand_id": "b1"}, "bounced")
+    s = state(brands=[brand(1, 0.9), brand(2, 0.8)], selected_brand_ids=["b1"], messages=[request])
+    fake = FakeLLM(decide={"discovery.replace": typo_then_fix})
+    update = await discovery.run(s, make_deps(fake, places=FakePlaces(lambda r, c: [])))
+
+    error = fake.calls[1]["context"]["observations"][0]["result"]["error"]
+    assert "available ids: b2" in error
+    assert update["messages"][-1].content["brand_id"] == "b2"
+    assert update["messages"][-1].reasoning == "fixed the id"
 
 
 async def test_failed_search_is_observed_and_agent_adapts(make_deps, db):
