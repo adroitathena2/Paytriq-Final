@@ -40,7 +40,13 @@ from app.tools.pdf import render_proposal_pdf
 
 AGENT = "outreach"
 LIVE_STATUSES = {"sent", "nudged", "replied", "pushback"}
+# Statuses that mean the organizer is still waiting on a brand to decide. "nudged" is deliberately not
+# here: the follow-up has been sent and the silence recorded, and a later reply is still picked up by
+# poll_replies because polling uses LIVE_STATUSES. Treating "nudged" as waiting kept demo runs stuck on
+# "Waiting for replies" forever when a fixture brand had no scripted reply.
+WAITING_STATUSES = {"sent", "replied", "pushback"}
 NEGATIVE_OUTCOMES = {"declined", "bounced", "silent"}
+PUSHBACK_LABELS = {"pushback_price", "pushback_deliverables"}
 CATEGORY_NEGATIVE_LIMIT = 2  # when to ask Clef about a category, not the answer
 CATEGORY_PURPOSE = "outreach.category_feedback"
 CATEGORY_QUESTION = "Given these outcomes, should we stop prioritising this business category for this event?"
@@ -140,6 +146,56 @@ class Workspace:
                 if age >= after_days:
                     out.append(brand_id)
         return out
+
+
+def classification_for(ws: Workspace, brand_id: str) -> dict | None:
+    """The latest reply classification, from this turn's LLM result or the thread's stored history.
+
+    Reading the history matters for recovery: after a deploy, a run whose reply was classified in an
+    earlier segment still carries that label, so the safety net can finish the action without polling
+    Gmail (and without re-classifying) again.
+    """
+    cls = ws.classes.get(brand_id)
+    if cls is not None:
+        return cls.model_dump()
+    thread = ws.threads.get(brand_id)
+    entry = next((e for e in reversed(thread.history) if e.get("type") == "classified"), None) if thread else None
+    return dict(entry) if entry else None
+
+
+async def route_pushback(deps, ws: Workspace, brand_id: str, constraint: str = "",
+                         max_price_inr: int | None = None, cls: dict | None = None) -> dict:
+    """L3: send a brand's price/deliverable constraint to the Proposal agent as a revision request."""
+    cls = cls if cls is not None else classification_for(ws, brand_id)
+    if brand_id not in ws.proposals:
+        raise ToolInputError(f"no proposal for {brand_id}")
+    content = {"brand_id": brand_id, "constraint": constraint or (cls or {}).get("constraint") or "",
+               "source": "brand_reply", "reply_label": (cls or {}).get("label"),
+               "from_version": ws.proposals[brand_id].version}
+    cap = max_price_inr or (cls or {}).get("max_price_inr")
+    if cap:
+        content["max_price_inr"] = int(cap)
+    reasoning = (cls or {}).get("summary") or constraint
+    ws.messages.append(await emit(deps, AGENT, "proposal", "revision_request", content, reasoning))
+    ws.thread(brand_id).status = "pushback"
+    ws.proposals[brand_id].status = "needs_revision"
+    return {"routed_to": "proposal", "constraint": content["constraint"]}
+
+
+async def mark_accepted(deps, ws: Workspace, brand_id: str, tier: str = "",
+                        cls: dict | None = None) -> dict:
+    cls = cls if cls is not None else classification_for(ws, brand_id)
+    tier = tier or (cls or {}).get("accepted_tier") or "Silver"
+    if tier not in ("Bronze", "Silver", "Gold"):
+        raise ToolInputError("tier must be Bronze, Silver or Gold")
+    thread = ws.thread(brand_id)
+    thread.status = "accepted"
+    thread.history.append({"type": "accepted", "tier": tier, "ts": now_iso()})
+    if brand_id in ws.proposals:
+        ws.proposals[brand_id].status = "accepted"
+    ws.record_outcome(brand_id, "accepted")
+    deal = await record_deal(deps, ws, brand_id, tier)
+    return {"accepted": brand_id, "tier": tier, "deal_recorded": deal is not None}
 
 
 def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
@@ -255,39 +311,15 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
                                             "max_price_inr": c.max_price_inr, "accepted_tier": c.accepted_tier}
                                for c in batch.replies}}
 
-    async def route_pushback(brand_id: str, constraint: str = "", max_price_inr: int | None = None) -> dict:
-        cls = ws.classes.get(brand_id)
-        if brand_id not in ws.proposals:
-            raise ToolInputError(f"no proposal for {brand_id}")
-        content = {"brand_id": brand_id, "constraint": constraint or (cls.constraint if cls else "") or "",
-                   "source": "brand_reply", "reply_label": cls.label if cls else None,
-                   "from_version": ws.proposals[brand_id].version}
-        cap = max_price_inr or (cls.max_price_inr if cls else None)
-        if cap:
-            content["max_price_inr"] = int(cap)
-        reasoning = cls.summary if cls else constraint
-        ws.messages.append(await emit(deps, AGENT, "proposal", "revision_request", content, reasoning))
-        ws.thread(brand_id).status = "pushback"
-        ws.proposals[brand_id].status = "needs_revision"
-        return {"routed_to": "proposal", "constraint": content["constraint"]}
+    async def route_pushback_tool(brand_id: str, constraint: str = "", max_price_inr: int | None = None) -> dict:
+        return await route_pushback(deps, ws, brand_id, constraint, max_price_inr)
 
     async def request_replacement(brand_id: str, why: str) -> dict:
         await replace_brand(deps, ws, brand_id, why)
         return {"requested": True}
 
-    async def mark_accepted(brand_id: str, tier: str = "") -> dict:
-        cls = ws.classes.get(brand_id)
-        tier = tier or (cls.accepted_tier if cls else None) or "Silver"
-        if tier not in ("Bronze", "Silver", "Gold"):
-            raise ToolInputError("tier must be Bronze, Silver or Gold")
-        thread = ws.thread(brand_id)
-        thread.status = "accepted"
-        thread.history.append({"type": "accepted", "tier": tier, "ts": now_iso()})
-        if brand_id in ws.proposals:
-            ws.proposals[brand_id].status = "accepted"
-        ws.record_outcome(brand_id, "accepted")
-        deal = await record_deal(deps, ws, brand_id, tier)
-        return {"accepted": brand_id, "tier": tier, "deal_recorded": deal is not None}
+    async def mark_accepted_tool(brand_id: str, tier: str = "") -> dict:
+        return await mark_accepted(deps, ws, brand_id, tier)
 
     async def draft_nudge(brand_id: str, body: str) -> dict:
         if brand_id not in ws.silent_threads(s.nudge_after_days):
@@ -326,13 +358,13 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
             AgentTool(ToolSpec(name="route_pushback", description="Send a brand's pushback to the Proposal agent.",
                                parameters={"type": "object", "properties": {
                                    **brand, "constraint": {"type": "string"}, "max_price_inr": {"type": "integer"}},
-                                   "required": ["brand_id"]}), route_pushback),
+                                   "required": ["brand_id"]}), route_pushback_tool),
             AgentTool(ToolSpec(name="request_replacement", description="Ask Discovery for a replacement brand.",
                                parameters={"type": "object", "properties": {**brand, "why": {"type": "string"}},
                                            "required": ["brand_id", "why"]}), request_replacement),
             AgentTool(ToolSpec(name="mark_accepted", description="Record that a brand accepted a tier.",
                                parameters={"type": "object", "properties": {**brand, "tier": {"type": "string"}},
-                                           "required": ["brand_id"]}), mark_accepted),
+                                           "required": ["brand_id"]}), mark_accepted_tool),
             AgentTool(ToolSpec(name="draft_nudge", description="Draft a polite follow-up for a silent thread.",
                                parameters={"type": "object", "properties": {**brand, "body": {"type": "string"}},
                                            "required": ["brand_id", "body"]}), draft_nudge),
@@ -405,25 +437,37 @@ async def _send_all(deps, ws: Workspace) -> dict:
     return {"sent": sent, "failed": failed}
 
 
-async def handle_unrouted_declines(deps, ws: Workspace) -> list[str]:
-    """Safety net for L4/L6: request a replacement for every decline or bounce the LLM did not act on.
+async def handle_unrouted_replies(deps, ws: Workspace) -> list[str]:
+    """Safety net for L3/L4/L6: finish every classified reply the LLM did not act on.
 
     The LLM picks one tool per step within a budget of 6 calls, so a busy inbox (poll + classify + one action
-    per reply) can run out before every brand is handled. A declined reply that is never acted on would leave
-    the thread "replied", its outcome unrecorded and no replacement requested, so L6 could never fire.
-    Like the approved-send fallback in ``run``, this finishes the step in code. Returns the brands handled.
+    per reply) can run out before every brand is handled. A reply that is never acted on leaves the thread
+    "replied": the accept is not recorded, pushback never reaches Proposal, a decline never reaches Discovery
+    and the run sits on "Waiting for replies" forever because another poll finds nothing new.
+
+    This reads the classification the reply loop stored in thread history (``classification_for``), so it also
+    repairs runs that got stuck before a deploy: clicking Continue (or Check for replies) is enough to finish
+    them. Like the approved-send fallback in ``run``, it completes the step in code. Returns what it handled.
     """
-    asked = {m.content.get("brand_id") for m in ws.messages
-             if m.type == "request" and m.content.get("reason") == "replacement"}
-    todo = [b for b, c in ws.classes.items()
-            if c.label == "declined" and ws.thread(b).status == "replied" and b not in asked]
-    todo += [b for b, t in ws.threads.items() if t.status == "bounced" and b not in asked
-             and any(e.get("type") == "reply" and e.get("bounce") for e in t.history)
-             and "bounced" not in ws.feedback.get(b, [])]
-    for brand_id in todo:
-        why = ws.classes[brand_id].summary if brand_id in ws.classes else "email bounced"
-        await replace_brand(deps, ws, brand_id, why, fallback=True)
-    return todo
+    handled: list[str] = []
+    for brand_id, thread in ws.threads.items():
+        cls = classification_for(ws, brand_id)
+        label = (cls or {}).get("label")
+        if thread.status == "replied" and label == "accepted" \
+                and not any(e.get("type") == "accepted" for e in thread.history):
+            await mark_accepted(deps, ws, brand_id, cls=cls)
+            handled.append(f"{brand_id} (accepted)")
+        elif thread.status == "replied" and label in PUSHBACK_LABELS:
+            await route_pushback(deps, ws, brand_id, cls=cls)
+            handled.append(f"{brand_id} (pushback -> proposal)")
+        elif thread.status == "replied" and label == "declined":
+            await replace_brand(deps, ws, brand_id, (cls or {}).get("summary") or "declined", fallback=True)
+            handled.append(f"{brand_id} (declined -> replacement)")
+        elif thread.status == "bounced" and "bounced" not in ws.feedback.get(brand_id, []) \
+                and any(e.get("type") == "reply" and e.get("bounce") for e in thread.history):
+            await replace_brand(deps, ws, brand_id, "email bounced", fallback=True)
+            handled.append(f"{brand_id} (bounced -> replacement)")
+    return handled
 
 
 async def replace_brand(deps, ws: Workspace, brand_id: str, why: str, fallback: bool = False) -> None:
@@ -507,7 +551,7 @@ def next_phase(ws: Workspace) -> str:
         return "proposals" if any(p.status == "needs_revision" for p in ws.proposals.values()) else "review"
     if any(m.to_agent == "discovery" for m in ws.messages):
         return "replacement"
-    if any(t.status in LIVE_STATUSES for t in ws.threads.values()):
+    if any(t.status in WAITING_STATUSES for t in ws.threads.values()):
         return "awaiting_replies"
     return "outreach_idle"
 
@@ -526,6 +570,7 @@ async def run(state: EventState, deps) -> dict:
         "requests": [r.content for r in requests],
     }
     errors = list(state.get("errors", []))
+    summary = "Nothing for outreach to do right now."
     if tools:
         result = await run_tool_loop(deps, AGENT, "outreach.plan", SYSTEM, context, tools)
         errors += result.errors
@@ -534,11 +579,10 @@ async def run(state: EventState, deps) -> dict:
             # The organizer already approved these emails: send them even if the LLM skipped the step or is down.
             await _send_all(deps, ws)
             summary = f"{summary} Sent the organizer-approved emails.".strip()
-        handled = await handle_unrouted_declines(deps, ws)
-        if handled:
-            summary = f"{summary} Requested replacements for {', '.join(handled)} (declined or bounced).".strip()
-    else:
-        summary = "Nothing for outreach to do right now."
+    # Run even with no tools: this is what repairs a run whose classified replies the LLM never acted on.
+    handled = await handle_unrouted_replies(deps, ws)
+    if handled:
+        summary = f"{summary} Finished replies the loop did not reach: {', '.join(handled)}.".strip()
     await category_feedback(deps, ws)
     errors += ws.errors
 
