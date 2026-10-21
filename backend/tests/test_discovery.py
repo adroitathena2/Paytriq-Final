@@ -4,8 +4,16 @@ from app.agents import discovery
 from app.core.llm import FakeLLM, LLMError
 from app.graph.messages import new_message
 from tests.factories import brand, state
-from tests.fakes import (FakePlaces, call, discovery_plan, discovery_replace, failing, make_brand, score_by_name,
-                         tools_used)
+from tests.fakes import (
+    FakePlaces,
+    call,
+    discovery_plan,
+    discovery_replace,
+    failing,
+    make_brand,
+    score_by_name,
+    tools_used,
+)
 
 REPLAN = {"radius_km": 4, "extra_categories": ["bakery"], "reasoning": "only 2 good cafes within 2 km; widen"}
 
