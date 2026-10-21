@@ -272,14 +272,7 @@ def build_tools(deps, ws: Workspace, polling: bool) -> list[AgentTool]:
         return {"routed_to": "proposal", "constraint": content["constraint"]}
 
     async def request_replacement(brand_id: str, why: str) -> dict:
-        thread = ws.thread(brand_id)
-        if thread.status != "bounced":
-            thread.status = "declined"
-        ws.record_outcome(brand_id, thread.status)
-        if brand_id in ws.proposals:
-            ws.proposals[brand_id].status = "declined"
-        ws.messages.append(await emit(deps, AGENT, "discovery", "request",
-                                      {"reason": "replacement", "brand_id": brand_id, "why": why}, why))
+        await replace_brand(deps, ws, brand_id, why)
         return {"requested": True}
 
     async def mark_accepted(brand_id: str, tier: str = "") -> dict:
@@ -412,6 +405,43 @@ async def _send_all(deps, ws: Workspace) -> dict:
     return {"sent": sent, "failed": failed}
 
 
+async def handle_unrouted_declines(deps, ws: Workspace) -> list[str]:
+    """Safety net for L4/L6: request a replacement for every decline or bounce the LLM did not act on.
+
+    The LLM picks one tool per step within a budget of 6 calls, so a busy inbox (poll + classify + one action
+    per reply) can run out before every brand is handled. A declined reply that is never acted on would leave
+    the thread "replied", its outcome unrecorded and no replacement requested, so L6 could never fire.
+    Like the approved-send fallback in ``run``, this finishes the step in code. Returns the brands handled.
+    """
+    asked = {m.content.get("brand_id") for m in ws.messages
+             if m.type == "request" and m.content.get("reason") == "replacement"}
+    todo = [b for b, c in ws.classes.items()
+            if c.label == "declined" and ws.thread(b).status == "replied" and b not in asked]
+    todo += [b for b, t in ws.threads.items() if t.status == "bounced" and b not in asked
+             and any(e.get("type") == "reply" and e.get("bounce") for e in t.history)
+             and "bounced" not in ws.feedback.get(b, [])]
+    for brand_id in todo:
+        why = ws.classes[brand_id].summary if brand_id in ws.classes else "email bounced"
+        await replace_brand(deps, ws, brand_id, why, fallback=True)
+    return todo
+
+
+async def replace_brand(deps, ws: Workspace, brand_id: str, why: str, fallback: bool = False) -> None:
+    """L4: record the decline or bounce for this brand and ask Discovery for a replacement."""
+    thread = ws.thread(brand_id)
+    if thread.status != "bounced":
+        thread.status = "declined"
+    ws.record_outcome(brand_id, thread.status)
+    if brand_id in ws.proposals:
+        ws.proposals[brand_id].status = "declined"
+    content = {"reason": "replacement", "brand_id": brand_id, "why": why}
+    reasoning = why
+    if fallback:
+        content["source"] = "outreach_fallback"
+        reasoning = f"{why} (handled in code: the reasoning loop ended before acting on it)"
+    ws.messages.append(await emit(deps, AGENT, "discovery", "request", content, reasoning))
+
+
 def category_checks_so_far(state: EventState) -> dict[str, int]:
     """Categories Clef already said "keep" for, with the negative-outcome count at that time (L6)."""
     checks: dict[str, int] = {}
@@ -504,6 +534,9 @@ async def run(state: EventState, deps) -> dict:
             # The organizer already approved these emails: send them even if the LLM skipped the step or is down.
             await _send_all(deps, ws)
             summary = f"{summary} Sent the organizer-approved emails.".strip()
+        handled = await handle_unrouted_declines(deps, ws)
+        if handled:
+            summary = f"{summary} Requested replacements for {', '.join(handled)} (declined or bounced).".strip()
     else:
         summary = "Nothing for outreach to do right now."
     await category_feedback(deps, ws)
