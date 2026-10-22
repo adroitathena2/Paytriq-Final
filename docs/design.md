@@ -165,39 +165,64 @@ Two narrow yes/no judgements (L6, L7) go to Cloudflare Clef instead (section 5.2
 
 ## 5. Coordination loops (what makes this more than a pipeline)
 
+**Coordination sequence of the submitted run (run 4961225e)**, drawn from
+`traces/2026-10-21-demo-mode-full-run.json`:
+
 ```mermaid
+---
+title: Coordination sequence of the submitted run (run 4961225e)
+---
 sequenceDiagram
   participant S as Supervisor
   participant D as Discovery
   participant P as Proposal
   participant O as Outreach
+  participant R as ROI Audit
   participant H as Organizer
   S->>D: discover
-  D->>D: L1 replan (4 good brands at 2 km, widen to 4 km)
+  D->>D: L1 replan: 3 good fits at 2 km, widen to 4 km
+  D->>S: 10 brands ranked, 8 good fits
   S->>H: shortlist gate
-  H->>S: approve 6 brands
+  H->>S: approve 5 brands: Chai Junction, Apex Coaching, Bean Theory, PulseFit Gym, Crumbs & Co
   S->>P: write proposals
-  P->>D: L7 request "infeasible: wholesaler, no deliverable fits"
-  S->>D: replace infeasible brand
-  S->>P: A2 revision_request "cap Gold at 1.25 x median of past coaching deals"
+  S->>P: A2 revision_request: Apex v1 up to Rs 50,000, cap every tier at Rs 12,500 (1.25 x Rs 10,000 median of 3 deals)
+  P->>S: Apex v2, Gold Rs 12,000
   S->>O: critique
-  O->>P: L2 revision_request "Gold too pricey for a cafe"
-  P->>O: v2 ready
+  O->>P: L2 revision_request: PulseFit Gym Bronze Rs 12,000 too steep, Gold Rs 40,000 unrealistic, reach not scaling
+  P->>O: PulseFit v2
+  S->>H: send gate
+  H->>S: approve, 5 emails sent
+  Note over O: poll replies
+  O->>S: Apex accepted Gold, Crumbs & Co accepted Bronze
+  O->>P: L3 revision_request: Bean Theory budget capped at Rs 8,000
+  O->>D: L4 replacement: PulseFit Gym declined
+  O->>D: L4 replacement: Chai Junction bounced
+  S->>D: A1 bounce beats ranking: Chai Junction (ranked first, fit 0.95) marked unreachable
+  P->>O: Bean Theory v2, Gold Rs 8,000
+  D->>S: replacements Glow Studio Salon and IronCore Gym
+  O->>P: L2 revision_request: IronCore Gym Gold Rs 40,000 too steep
+  P->>O: IronCore v2
   S->>H: send gate
   H->>S: approve, emails sent
-  Note over O: days later: poll replies
-  O->>P: L3 revision_request "keep every tier under Rs 8,000" (brand reply)
-  O->>D: L4 request replacement (declined / bounced)
-  S->>D: A1 bounce beats ranking: top-ranked brand marked unreachable
-  O->>D: L6 request category_feedback (2 gyms declined)
-  D->>D: gyms x0.6, re-rank, replacements from other categories
-  S->>H: send gate
-  Note over S: after the event: audit
-  S->>H: L5 escalation "upload a photo of the stall"
+  Note over O: poll replies
+  O->>S: Bean Theory accepted Silver v2, Glow Studio Salon accepted Bronze
+  O->>D: L4 replacement: IronCore Gym declined
+  O->>D: L6 category_feedback: 2 gyms declined, Clef p_yes 0.90
+  D->>D: gym scores x0.6, re-rank
+  D->>S: replacement Page Turner Books
+  S->>H: send gate for Page Turner Books, later for a nudge
+  Note over O: Page Turner Books stays silent after the nudge
+  Note over R: after the event: audit of 14 evidence photos
+  R->>H: L5 escalation: 15 deliverables missing or ambiguous, asks for specific evidence
   S->>H: A3 missing proof: publishing blocked
-  H->>S: publish with gaps disclosed, then roi_publish approval
-  S->>P: L8 calibration saved for future reach estimates
+  H->>S: publish with gaps disclosed
+  S->>H: roi_publish gate
+  H->>S: approve
+  R->>P: L8 calibration for coaching, cafe, bakery and salon (factor 0.00, see section 9)
 ```
+
+L7 did not fire in this run because the wholesaler was not shortlisted; it is covered by the tests
+(`backend/tests/test_proposal.py` and the end-to-end `test_integration.py`).
 
 | Loop | Trigger | Message on the bus | Bound |
 |---|---|---|---|

@@ -46,32 +46,39 @@ Trace page.
 
 ## How agents adapt to each other
 
-One worked example per loop and rule, from the demo fixture world (`backend/app/demo/world.py`, Fergusson Fest 2026):
+One worked example per loop and rule, from the submitted real run in the demo fixture world
+(`traces/2026-10-21-demo-mode-full-run.json`, Fergusson Fest 2026). L7 did not fire in that run, so its example
+describes the fixture world and the tests instead:
 
-- **L1 self-replan (Discovery -> Discovery).** Only 4 businesses lie within 2 km, so fewer than 5 score >= 0.6.
-  Discovery posts a `replan`, widens to 4 km with adjacent categories and finds the coaching centre and bakery.
-- **L2 critique (Outreach -> Proposal).** Outreach reads a cafe's v1 like a sceptical shop owner, finds Gold too
-  expensive for a cafe and sends a `revision_request`; Proposal writes v2 under the cap.
-- **L3 pushback (Outreach -> Proposal).** Bean Theory Cafe replies "Rs 8,000 is the max". Outreach classifies it as
-  `pushback_price` and routes the constraint to Proposal, which writes a version with every tier at or under Rs 8,000.
-  Bean Theory then accepts Silver.
-- **L4 replacement (Outreach -> Discovery).** IronCore Gym and PulseFit Gym decline; Chai Junction's email bounces.
-  Each one gets its own replacement brand from Discovery.
-- **L5 evidence (ROI Audit -> organizer).** One promised deliverable has no photo. ROI Audit asks the organizer for
-  that specific evidence instead of guessing.
-- **L6 category feedback (Outreach -> Discovery).** Two gyms said no. Outreach asks Clef whether to stop prioritising
-  gyms; on yes it tells Discovery, which multiplies gym scores by 0.6, re-ranks and picks replacements from other
-  categories.
-- **L7 infeasible (Proposal -> Discovery).** Metro Wholesale Traders sells to shops, not students. Clef judges that
-  no deliverable fits, so Proposal renders no PDF and hands the brand back to Discovery for a replacement.
+- **L1 self-replan (Discovery -> Discovery).** Only 3 businesses within 2 km scored >= 0.6, fewer than the 5 needed.
+  Discovery posted a `replan`, widened to 4 km and ranked 10 brands, 8 of them good fits.
+- **L2 critique (Outreach -> Proposal).** Outreach read PulseFit Gym's v1 like a sceptical shop owner: Bronze at
+  Rs 12,000 was too steep, Gold at Rs 40,000 unrealistic and reach did not scale across tiers. It sent a
+  `revision_request` and Proposal wrote v2. Later, IronCore Gym's v1 was sent back the same way.
+- **L3 pushback (Outreach -> Proposal).** Bean Theory Cafe replied that Rs 8,000 was the most it could spend. Outreach
+  classified it as `pushback_price` and routed the constraint to Proposal, which wrote a v2 with every tier at or
+  under Rs 8,000. Bean Theory then accepted Silver.
+- **L4 replacement (Outreach -> Discovery).** PulseFit Gym and later IronCore Gym declined; Chai Junction's email
+  bounced. Each one got a replacement from Discovery (Glow Studio Salon, IronCore Gym, Page Turner Books).
+- **L5 evidence (ROI Audit -> organizer).** The audit could not verify any of the 15 promised deliverables (10
+  ambiguous, 5 missing). ROI Audit asked the organizer for specific evidence for each one instead of guessing.
+- **L6 category feedback (Outreach -> Discovery).** Two gyms said no. Outreach asked Clef whether to stop prioritising
+  gyms (p_yes 0.90); on yes it told Discovery, which multiplied gym scores by 0.6, re-ranked and picked Page Turner
+  Books, a bookstore, as the replacement.
+- **L7 infeasible (Proposal -> Discovery).** Metro Wholesale Traders sells to shops, not students. If the organizer
+  shortlists it, Clef judges that no deliverable fits, so Proposal renders no PDF and hands the brand back to
+  Discovery for a replacement. It was not shortlisted in the submitted run; the tests cover it.
 - **L8 calibration (ROI Audit -> Proposal).** When the organizer approves the ROI report, the reach the verified
-  deliverables actually achieved (at the actual footfall) is saved per category; the next proposal in that category
-  scales its expected reach and says "estimate calibrated from N past events".
-- **A1 bounce beats ranking.** Chai Junction is the closest, top-ranked cafe, but its email bounced. The supervisor
-  marks it unreachable: delivery evidence beats ranking.
-- **A2 price vs past deals.** This organizer's past coaching sponsors paid a median of Rs 10,000. Proposal priced Apex
-  Coaching far above that, so the supervisor caps every tier at 1.25 x the median and asks for a revision. For cafes
-  there are only 2 past deals, so A2 logs "insufficient data" and leaves the price alone.
+  deliverables actually achieved (at the actual footfall) is saved per category, but only from sponsors whose
+  deliverables were all verified; other categories get a `calibration_skipped` message instead. The next proposal in
+  a calibrated category scales its expected reach and says "estimate calibrated from N past events". (The submitted
+  run predates this rule and saved x0.00 for four categories from unverified evidence; see `docs/design.md` section 9.)
+- **A1 bounce beats ranking.** Chai Junction Cafe was ranked first (fit 0.95), but its email bounced. The supervisor
+  marked it unreachable: delivery evidence beats ranking.
+- **A2 price vs past deals.** This organizer's 3 past coaching sponsors paid a median of Rs 10,000. Proposal priced
+  Apex Coaching up to Rs 50,000, so the supervisor capped every tier at Rs 12,500 (1.25 x the median) and asked for a
+  revision; v2 priced Gold at Rs 12,000. For categories with fewer than 3 past deals, A2 logs "insufficient data" and
+  leaves the price alone.
 - **A3 ROI gaps block publishing.** Because proof is missing, the report is not published. The organizer either
   uploads the evidence and re-runs the audit, or explicitly clicks "Publish with gaps disclosed"; the normal publish
   approval still follows.
