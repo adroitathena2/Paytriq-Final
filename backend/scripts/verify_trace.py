@@ -1,7 +1,7 @@
 """Check an exported Paytriq trace for every coordination loop (L1-L8) and arbitration rule (A1-A3).
 
 Usage (from the repo root):
-    python backend/scripts/verify_trace.py traces/2026-10-19-demo-mode-full-run.json
+    python backend/scripts/verify_trace.py traces/2026-10-21-demo-mode-full-run.json
 
 Read-only: the file is never changed. For each marker in traces/README.md it prints whether it fired, how
 often, and the first trace entry id / message id. It also prints the message ids, timestamps and counts that

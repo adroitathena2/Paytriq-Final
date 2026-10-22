@@ -151,7 +151,7 @@ async def test_two_gym_declines_send_category_feedback_to_discovery(make_deps, s
 
 
 async def test_declines_are_handled_even_when_the_tool_budget_runs_out(make_deps, settings):
-    """Regression (2026-10-19 trace): with many replies, poll + classify + one action per brand needs more
+    """Regression (seen in an earlier demo run): with many replies, poll + classify + one action per brand needs more
     than the 6 tool calls an agent turn allows. Declines the LLM never got to must still be recorded and
     replaced, or the threads stay "replied", nothing reaches Discovery and L6 never fires."""
     gmail = FakeGmail(settings)

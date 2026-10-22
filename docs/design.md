@@ -328,27 +328,29 @@ The CA2 review (Exam Studio, approved project page) said:
 > conflict/arbitration between agents the way the strongest resubmissions in this batch demonstrate."
 
 Paytriq now has eight loops in which one agent's output changes what another does, and three conflicts the
-supervisor arbitrates (sections 5 and 5.1). Three examples from the committed real trace
-(`traces/2026-10-19-demo-mode-full-run.json`):
+supervisor arbitrates (sections 5 and 5.1). Four examples from the submitted real trace
+(`traces/2026-10-21-demo-mode-full-run.json`, run `4961225e-639a-4fad-a50d-8097ab27fe1e`):
 
-1. **Outreach's findings change what Proposal does next (L3).** A brand replied that its budget was capped. Outreach
-   classified the reply as `pushback_price` and posted a `revision_request` with `source: brand_reply`
-   (message `1c395e902b4b`, trace #650, 2026-10-18T21:09:59Z). Proposal answered with version 2 under the brand's cap
-   (result `0b00d1d4e248`, trace #667, 2026-10-18T21:10:55Z: Gold Rs 8,000 / Silver Rs 5,000 / Bronze Rs 3,000), and
-   the organizer approved the revised email at the send
-   gate.
-2. **A bounce overrides Discovery's ranking (A1).** Discovery ranked a cafe in its top 3
-   (result `54941b61c877`, trace #541, 2026-10-18T21:02:36Z), but Outreach's email to it bounced. The supervisor's
-   rule A1 marked it unreachable and the replacement went ahead (arbitration trace #657, 2026-10-18T21:10:23Z:
-   "Discovery ranked Chai Junction Cafe #1 (fit 0.95), but Outreach's email to it bounced." -> "Delivery evidence
-   beats ranking: Chai Junction Cafe marked unreachable; Outreach's replacement request stands.";
-   L4 request `16aa8c5c9241`, trace #653, 2026-10-18T21:10:05Z).
-3. **The supervisor caps a price against past deals (A2).** Proposal priced the coaching centre above what this
-   organizer's past coaching sponsors accepted. A2 capped it at 1.25 x the median and sent a `revision_request` with
-   `source: arbitration` (arbitration trace #602, 2026-10-18T21:05:48Z: median Rs 10,000, cap Rs 12,500;
-   revision_request `f5e2d15de8db`, trace #603, 2026-10-18T21:05:49Z),
-   and Proposal produced a capped version (result `3779dcb43498`, trace #614, 2026-10-18T21:06:16Z: v2 Gold
-   Rs 12,000 / Silver Rs 9,000 / Bronze Rs 6,000).
+1. **Outreach's findings change what Proposal does next (L3).** Bean Theory Cafe replied that Rs 8,000 was the most
+   it could spend. Outreach classified the reply as `pushback_price` and posted a `revision_request` with
+   `source: brand_reply` (message `805fbf6e4b80`, trace #1335, 2026-10-21T18:23:19Z). Proposal answered with version 2
+   under the brand's cap (result `a072f7196e66`, trace #1351, 2026-10-21T18:24:25Z: Gold Rs 8,000 / Silver Rs 5,500 /
+   Bronze Rs 3,000), and the organizer approved the revised email at the send gate.
+2. **A bounce overrides Discovery's ranking (A1).** Discovery ranked Chai Junction Cafe first with fit 0.95 (result
+   `6d13b7961955`, trace #1205, 2026-10-21T17:11:35Z), but Outreach's email to it bounced. The supervisor's rule A1
+   marked it unreachable and the replacement went ahead (arbitration trace #1341, 2026-10-21T18:23:46Z: "Delivery
+   evidence beats ranking: Chai Junction Cafe marked unreachable; Outreach's replacement request stands.";
+   L4 request `ec7fc36b0569`, trace #1339, 2026-10-21T18:23:38Z).
+3. **The supervisor caps a price against past deals (A2).** Proposal priced Apex Coaching Classes up to Rs 50,000,
+   while this organizer's three past coaching deals had a median of Rs 10,000. A2 capped every tier at 1.25 x the
+   median and sent a `revision_request` with `source: arbitration` (arbitration trace #1262, 2026-10-21T18:16:15Z;
+   revision_request `84451195101a`, trace #1263), and Proposal produced a capped version (result `e7f4dc0914bc`,
+   trace #1276, 2026-10-21T18:16:52Z: v2 Gold Rs 12,000 / Silver Rs 8,500 / Bronze Rs 5,000).
+4. **Outcomes change what Discovery looks for (L6).** After PulseFit Gym and IronCore Gym both declined, Clef judged
+   that gyms should stop being prioritised (p_yes 0.90, trace #1455) and Outreach sent `category_feedback` to
+   Discovery (request `a6b3d775378d`, trace #1456). Discovery scaled gym scores by 0.6 and re-ranked (result
+   `266bfed371dd`, trace #1460), then picked Page Turner Books, a bookstore, as the replacement (result
+   `5dd91ac94f6a`, trace #1466, 2026-10-21T18:36:45Z).
 
 Ids and timestamps above are filled in from `python backend/scripts/verify_trace.py traces/<file>.json` on the
 committed trace; nothing in this section is written from memory.
