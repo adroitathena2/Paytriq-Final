@@ -230,21 +230,23 @@ Running the demo:
 ## Demo script (60 seconds)
 
 Numbers below are read from the committed real trace with `python backend/scripts/verify_trace.py
-traces/2026-10-19-demo-mode-full-run.json`; never use numbers from a rehearsal run. If a loop or rule did not fire in
+traces/2026-10-21-demo-mode-full-run.json`; never use numbers from a rehearsal run. If a loop or rule did not fire in
 the real trace (A1 and L2 depend on Gemini's own ranking and critique; L6 and L7 on Clef's judgement), drop that
-sentence rather than claim it. In this run L1, L2 and L6 did not fire, so they are left out.
+sentence rather than claim it. In this run L7 did not fire (Metro Wholesale was not shortlisted), so it is left out.
 
 > "The reviewer asked for an example of one agent's output changing what another does. Paytriq has eight loops
-> and three conflicts the supervisor arbitrates; this real run shows five of the loops and all three rules.
-> On this real demo-mode run with Gemini, the supervisor capped Apex Coaching from Rs 48,000 to Rs 12,500 because
-> past coaching deals had a median of Rs 10,000 (A2).
+> and three conflicts the supervisor arbitrates; this real run shows seven of the loops and all three rules.
+> Discovery found too few good fits at 2 km and replanned to 4 km (L1). The supervisor capped Apex Coaching from
+> Rs 50,000 to Rs 12,500 because past coaching deals had a median of Rs 10,000 (A2), and Outreach critiqued the gym
+> proposals as too expensive and sent them back to Proposal (L2).
 > After sending: Bean Theory said 'Rs 8,000 max' and Proposal wrote a cheaper version (L3); our top-ranked cafe
-> bounced and Discovery replaced it (L4); the bounce overrode Discovery's ranking (A1). The replacement was a
-> wholesaler, so Proposal refused to pitch it and sent it back to Discovery (L7), which found Crumbs Bakery.
-> After the event, one photo was missing: ROI Audit asked for it (L5) and the supervisor blocked publishing until
-> we chose to publish with the gap disclosed (A3). That approval saved a reach factor for the next proposals (L8);
-> here it is 0.0, because Gemini Vision marked all the generated demo photos ambiguous, so no deliverable counted
-> as verified. All 33 decision_log entries are in this exported trace, unedited."
+> bounced, the bounce overrode Discovery's ranking (A1) and Discovery replaced it (L4). When both gyms declined,
+> Clef judged that gyms should stop being prioritised, so Discovery down-weighted gyms and picked a bookstore (L6).
+> After the event, ROI Audit could not verify the deliverables and asked for specific evidence (L5), and the
+> supervisor blocked publishing until we chose to publish with the gaps disclosed (A3). That approval saved a reach
+> factor per category for the next proposals (L8); here it is 0.0, because Gemini Vision did not accept the
+> generated demo photos as proof, so no deliverable counted as verified. All 54 decision_log entries are in this
+> exported trace, unedited."
 
 ## Team
 

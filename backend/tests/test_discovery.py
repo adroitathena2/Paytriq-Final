@@ -72,7 +72,7 @@ async def test_replan_without_llm_widens_deterministically(make_deps):
 
 
 def eager_widener(ctx: dict) -> dict:
-    """An LLM that asks for 3.5 km straight away, as Gemini did in the 2026-10-19 trace."""
+    """An LLM that asks for 3.5 km straight away, as Gemini did in an earlier demo run."""
     used = tools_used(ctx)
     if not used:
         return call("search_places", categories=["cafe", "gym"], radius_km=3.5)

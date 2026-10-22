@@ -1,74 +1,227 @@
 {
-  "create_event": {
-    "endpoint": "POST /events",
-    "body": {
-      "name": "Fergusson Fest 2026",
-      "college": "Fergusson College, Pune",
-      "event_date": "2026-12-12",
-      "expected_footfall": 1800,
-      "audience": "18-22 year old arts, science and commerce students; many live in nearby PGs and hostels",
-      "budget_goal_inr": 120000,
-      "lat": 18.5236,
-      "lng": 73.8394
+  "_provenance": "Every organizer input of run 4961225e-639a-4fad-a50d-8097ab27fe1e (2026-10-21, deployed system https://paytriq-api.onrender.com, demo mode, model gemini-flash-latest), in order. Bodies are copied from the human `resume` and `message` entries of traces/2026-10-21-demo-mode-full-run.json; trace_entry gives the entry id.",
+  "inputs": [
+    {
+      "step": "create_demo_event",
+      "endpoint": "POST /events/demo",
+      "body": {
+        "rehearsal": false
+      },
+      "note": "Creates this event with demo_scenario = demo (fixture businesses and inbox, real Gemini reasoning).",
+      "event_created": {
+        "name": "Fergusson Fest 2026",
+        "college": "Fergusson College, Pune",
+        "event_date": "2026-12-12",
+        "expected_footfall": 1800,
+        "audience": "18-22 year old arts, science and commerce students; many live in nearby PGs and hostels",
+        "budget_goal_inr": 120000,
+        "lat": 18.5236,
+        "lng": 73.8394
+      },
+      "event_id": "9ac2acb6-36ab-4799-b418-b1d3d74f9215"
+    },
+    {
+      "step": "start_run",
+      "endpoint": "POST /events/{event_id}/runs",
+      "body": null,
+      "run_id": "4961225e-639a-4fad-a50d-8097ab27fe1e"
+    },
+    {
+      "step": "approve_shortlist",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "shortlist",
+        "decision": "approve",
+        "edits": {
+          "selected_brand_ids": [
+            "demo-chai-junction",
+            "demo-apex-coaching",
+            "demo-bean-theory",
+            "demo-pulsefit-gym",
+            "demo-crumbs-bakery"
+          ]
+        }
+      },
+      "trace_entry": 1211,
+      "ts": "2026-10-21T18:13:35.562117+00:00"
+    },
+    {
+      "step": "approve_send",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "send",
+        "decision": "approve",
+        "edits": {
+          "emails": {
+            "demo-bean-theory": {
+              "body": "Hi Bean Theory Team,\n\nFergusson Fest 2026 is taking place on December 12, bringing together 1,800+ students right down the street from your cafe on FC Road. Most of our attendees live in nearby PGs and hostels looking for their regular study and coffee hangout.\n\nWe have tailored a partnership package that gives Bean Theory direct exposure, from coupon drops in 500 welcome kits to on-campus kiosk space and social promotions, with packages starting at ₹8,000.\n\nOur full proposal is attached with tier details. Could we set up a quick 5-minute call this week to explore partnering up?\n\nWarm regards,\nFergusson Fest Team",
+              "subject": "Partnership Proposal: Bean Theory Cafe x Fergusson Fest 2026"
+            },
+            "demo-pulsefit-gym": {
+              "body": "Hi Team PulseFit, Fergusson Fest 2026 is bringing together over 1,800 students on December 12th at Fergusson College, right along FC Road. Many of our attendees reside in nearby student hostels and PGs and actively seek local fitness memberships. We would love to partner with PulseFit to drive student sign-ups through on-ground promotional booth space, fitness challenge sponsorships, and flyer distribution in welcome kits. Packages start from ₹7,000, and the complete proposal is attached for your review. Would you be open to a quick 5-minute conversation or visit this week to discuss? Warm regards, Fergusson Fest Organizing Team.",
+              "subject": "Fergusson Fest 2026 x PulseFit Gym Partnership"
+            },
+            "demo-apex-coaching": {
+              "body": "Hi Apex Coaching Team,\n\nWith over 1,800 undergraduate arts, science, and commerce students gathering for Fergusson Fest 2026 on December 12, many are actively planning their CAT, GRE, and competitive exam preparation.\n\nWe would love to feature Apex Coaching as an education partner. We have designed actionable, lead-focused opportunities including dedicated counseling desks, brochure distribution, and stage address slots starting from ₹5,000.\n\nPlease find the attached sponsorship overview detailing our tiers and deliverables. Would you be open to connecting briefly this week to discuss how we can assist your upcoming batch admissions?\n\nWarm regards,\nFergusson Fest Team",
+              "subject": "Direct Student Engagement at Fergusson Fest 2026 - Apex Coaching"
+            },
+            "demo-chai-junction": {
+              "body": "Hi Chai Junction Team,\n\nI'm reaching out from the Fergusson Fest 2026 organizing team. Being just 300 meters from campus, your cafe is already a daily favorite for our hostel and PG students.\n\nOn December 12, our annual fest will host over 1,800 students. We'd love to partner with Chai Junction to drive sustained footfall and repeat visits to your cafe through exclusive campus couponing, on-ground presence, and targeted student shoutouts.\n\nI have attached our brief sponsorship proposal outlining three flexible options starting from ₹8,000. Take a look and let us know if you'd be open to a quick 5-minute chat this week.\n\nWarm regards,\nFergusson Fest Team",
+              "subject": "Fergusson Fest 2026 x Chai Junction Cafe Partnership"
+            },
+            "demo-crumbs-bakery": {
+              "body": "Hi Crumbs & Co Team,\n\nOn December 12, Fergusson Fest 2026 will bring together 1,800+ students on campus. Given your popularity around FC Road, we would love to feature Crumbs & Co as our featured bakery partner.\n\nWe have put together tailored opportunities starting from ₹6,000, featuring high-traffic dessert sampling stalls, welcome kit vouchers, and social media showcases to introduce your treats to hundreds of local PG and hostel students.\n\nPlease find our partnership deck attached. Would you be open to a quick chat this week to explore this collaboration?\n\nWarm regards,\nFergusson Fest Team",
+              "subject": "Fergusson Fest 2026: Official Bakery Partnership with Crumbs & Co"
+            }
+          },
+          "exclude": []
+        }
+      },
+      "trace_entry": 1311,
+      "ts": "2026-10-21T18:21:07.969548+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1322,
+      "ts": "2026-10-21T18:22:30.498807+00:00"
+    },
+    {
+      "step": "approve_send",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "send",
+        "decision": "approve",
+        "edits": {
+          "emails": {
+            "demo-glow-salon": {
+              "body": "Hi Team Glow Studio, we are hosting Fergusson Fest 2026 this December, bringing over 1,800 college students to campus just 3.4 km from your salon. Many of our students live in nearby FC Road PGs and hostels, actively seeking styling and grooming deals during festival season. We have attached our partnership proposal featuring tailored tiers starting at Rs 7,000, including student welcome-kit voucher distribution and live express styling desks. We would love to explore partnering with Glow Studio as our Official Grooming Partner.",
+              "subject": "Fergusson Fest 2026 x Glow Studio Salon Partnership"
+            },
+            "demo-bean-theory": {
+              "body": "Hi Team Bean Theory, thank you for getting back to us! Rs 8,000 works perfectly for us. Our Gold partnership package is priced at exactly Rs 8,000 and includes your dedicated 6x6 ft sampling stall in the central courtyard, prime stage backdrop presence, and 2 collaborative Instagram reels reaching over 1,800 Fergussonians. We would be thrilled to lock this in and welcome Bean Theory as our Official Beverage Partner. Please let us know if we can share the simple confirmation agreement.",
+              "subject": "Re: Fergusson Fest 2026 x Bean Theory Cafe Partnership"
+            },
+            "demo-ironcore-gym": {
+              "body": "Hi IronCore Gym Team, Fergusson Fest 2026 takes place on December 12th, bringing together over 1,800 students from Fergusson College, many of whom live in nearby PGs and hostels along FC Road. Located just 900m from campus, your gym is ideally positioned to sign up new student members. We have put together a tailored partnership proposal starting from ₹6,000, covering flyer distribution, an on-ground promotional desk, and co-hosting a campus fitness challenge. Please find the detailed proposal attached for your review. We would love to discuss how we can drive student walk-ins to IronCore Gym this season. Best regards, Organizing Team, Fergusson Fest 2026",
+              "subject": "Fergusson Fest 2026 x IronCore Gym: Student Membership Partnership"
+            }
+          },
+          "exclude": []
+        }
+      },
+      "trace_entry": 1428,
+      "ts": "2026-10-21T18:30:24.030914+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1439,
+      "ts": "2026-10-21T18:35:46.347150+00:00"
+    },
+    {
+      "step": "approve_send",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "send",
+        "decision": "approve",
+        "edits": {
+          "emails": {
+            "demo-page-turner": {
+              "body": "Hi Team Page Turner Books, We are organizing Fergusson Fest 2026 this December at Fergusson College, welcoming over 1,800 students right around FC Road. Given your popularity among campus readers and local hostelites, we would love to welcome Page Turner Books as an official partner. We have attached a tailored proposal starting from INR 7,500, featuring stall space at our main quad, coupon distribution in all 1,800 attendee welcome kits, and co-branding for our student poetry slam. Please review the attached proposal. Would you be open to a quick 5-minute chat this week? Warm regards, Fergusson Fest Organizing Team",
+              "subject": "Partnering with Fergusson Fest 2026 – Page Turner Books"
+            }
+          },
+          "exclude": []
+        }
+      },
+      "trace_entry": 1494,
+      "ts": "2026-10-21T19:04:17.983771+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1505,
+      "ts": "2026-10-21T19:04:55.219871+00:00"
+    },
+    {
+      "step": "approve_send",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "send",
+        "decision": "approve",
+        "edits": {
+          "emails": {
+            "demo-page-turner": {
+              "body": "Hi Team Page Turner, just following up on our previous note regarding Fergusson Fest 2026. We would love to feature Page Turner to our 1,800+ student attendees. Please let us know if you'd like to explore any of the sponsorship options.",
+              "subject": "Re: [Paytriq demo -> Page Turner Books] Partnering with Fergusson Fest 2026 – Page Turner Books"
+            }
+          },
+          "exclude": []
+        }
+      },
+      "trace_entry": 1520,
+      "ts": "2026-10-21T19:22:50.932663+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1531,
+      "ts": "2026-10-21T19:23:39.561504+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1542,
+      "ts": "2026-10-21T19:25:12.286411+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1553,
+      "ts": "2026-10-21T19:27:47.041279+00:00"
+    },
+    {
+      "step": "poll_replies",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/poll-replies",
+      "body": null,
+      "trace_entry": 1564,
+      "ts": "2026-10-21T19:33:07.014722+00:00"
+    },
+    {
+      "step": "run_audit",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/audit",
+      "body": {
+        "actual_footfall": 1500
+      },
+      "note": "14 evidence items were attached to the run before the audit; they are listed in sample_output.json (values.evidence).",
+      "trace_entry": 1575,
+      "ts": "2026-10-21T19:39:48.143706+00:00"
+    },
+    {
+      "step": "publish_with_gaps",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/publish-with-gaps",
+      "body": null,
+      "note": "Arbitration A3 had blocked publishing (phase roi_blocked).",
+      "trace_entry": 1599,
+      "ts": "2026-10-21T19:46:55.757204+00:00"
+    },
+    {
+      "step": "approve_roi_publish",
+      "endpoint": "POST /runs/4961225e-639a-4fad-a50d-8097ab27fe1e/approve",
+      "body": {
+        "gate": "roi_publish",
+        "decision": "approve",
+        "edits": {}
+      },
+      "trace_entry": 1607,
+      "ts": "2026-10-21T19:47:06.483553+00:00"
     }
-  },
-  "create_demo_event": {
-    "endpoint": "POST /events/demo",
-    "body": { "rehearsal": false },
-    "note": "Creates the same event as create_event with demo_scenario = demo: fixture businesses and inbox, real Gemini reasoning."
-  },
-  "start_run": { "endpoint": "POST /events/{event_id}/runs", "body": null },
-  "approve_shortlist": {
-    "endpoint": "POST /runs/{run_id}/approve",
-    "body": {
-      "gate": "shortlist",
-      "decision": "approve",
-      "edits": {
-        "selected_brand_ids": ["demo-chai-junction", "demo-bean-theory", "demo-ironcore-gym",
-                               "demo-metro-wholesale", "demo-pulsefit-gym", "demo-apex-coaching"]
-      }
-    }
-  },
-  "reject_shortlist_with_feedback": {
-    "endpoint": "POST /runs/{run_id}/approve",
-    "body": {
-      "gate": "shortlist",
-      "decision": "reject",
-      "edits": { "feedback": "We already have a cafe sponsor; look for coaching centres and gyms instead." }
-    }
-  },
-  "approve_send_with_edits": {
-    "endpoint": "POST /runs/{run_id}/approve",
-    "body": {
-      "gate": "send",
-      "decision": "approve",
-      "edits": {
-        "exclude": [],
-        "emails": { "demo-bean-theory": { "subject": "Fergusson Fest x Bean Theory Cafe", "body": "Hi! ..." } }
-      }
-    }
-  },
-  "poll_replies": { "endpoint": "POST /runs/{run_id}/poll-replies", "body": null },
-  "add_demo_evidence": { "endpoint": "POST /runs/{run_id}/demo-evidence", "body": null },
-  "add_evidence_link": {
-    "endpoint": "POST /runs/{run_id}/evidence (multipart/form-data)",
-    "form": { "brand_id": "demo-apex-coaching", "link": "https://www.instagram.com/p/EXAMPLE/", "note": "1 Instagram post" }
-  },
-  "add_evidence_photo": {
-    "endpoint": "POST /runs/{run_id}/evidence (multipart/form-data)",
-    "form": { "brand_id": "demo-apex-coaching", "file": "stage.jpg (image/jpeg, <= 8 MB)", "note": "Logo on main stage banner" }
-  },
-  "run_audit": {
-    "endpoint": "POST /runs/{run_id}/audit",
-    "body": { "actual_footfall": 1500 }
-  },
-  "publish_with_gaps": {
-    "endpoint": "POST /runs/{run_id}/publish-with-gaps",
-    "body": null,
-    "note": "Only in phase roi_blocked (arbitration A3). The roi_publish approval below still follows."
-  },
-  "publish_report": {
-    "endpoint": "POST /runs/{run_id}/approve",
-    "body": { "gate": "roi_publish", "decision": "approve", "edits": { "note": "Stall photo was lost; disclosed." } }
-  }
+  ]
 }

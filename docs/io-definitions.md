@@ -184,8 +184,10 @@ How each coordination loop and arbitration rule appears in `messages` and in the
 > `sample_output.json` is the real `GET /runs/{run_id}` response captured from the deployed system at the end of the
 > run whose trace is committed in [`/traces`](../traces).
 >
-> - run_id: `e160d171-213f-4076-b9c5-dab56e7c04d2`
-> - date: `2026-10-19`
+> - run_id: `4961225e-639a-4fad-a50d-8097ab27fe1e`
+> - date: `2026-10-21`
+> - trace: `traces/2026-10-21-demo-mode-full-run.json`
+> - `sample_input.json` lists every organizer input of this run in order, each with the trace entry it came from
 > - deployed API URL: `https://paytriq-api.onrender.com`
 > - model: `gemini-flash-latest`
 > - demo mode: fixture businesses and inbox, real Gemini reasoning
