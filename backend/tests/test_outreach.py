@@ -183,6 +183,42 @@ async def test_declines_are_handled_even_when_the_tool_budget_runs_out(make_deps
     assert update["phase"] == "proposals"  # b1's pushback is waiting on the Proposal agent
 
 
+async def test_classified_replies_are_finished_when_the_loop_ran_out(make_deps, settings):
+    """Recovery: a run stuck on awaiting_replies after its reply poll left accepted/pushback replies
+    untouched must finish them on the next Continue, reading the stored classification, not Gmail."""
+    ts = datetime.now(UTC).isoformat()
+    threads = {}
+    for brand_id, label in (("b1", "pushback_price"), ("b2", "accepted"), ("b3", "declined")):
+        threads[brand_id] = thread(brand_id, status="replied")
+        threads[brand_id].history.append({
+            "type": "classified", "brand_id": brand_id, "label": label, "summary": f"{label} summary",
+            "constraint": "Keep every tier under Rs 15,000" if label == "pushback_price" else None,
+            "max_price_inr": 15000 if label == "pushback_price" else None,
+            "accepted_tier": "Gold" if label == "accepted" else None, "ts": ts,
+        })
+    s = state(brands=[brand(1), brand(2), brand(3)], selected_brand_ids=list(threads),
+              proposals={b: proposal(b, status="sent") for b in threads}, outreach=threads, phase="awaiting_replies")
+    ws = outreach.Workspace(s)
+    handled = await outreach.handle_unrouted_replies(make_deps(llm(), gmail=FakeGmail(settings)), ws)
+
+    assert set(handled) == {"b1 (pushback -> proposal)", "b2 (accepted)", "b3 (declined -> replacement)"}
+    assert ws.threads["b1"].status == "pushback" and ws.proposals["b1"].status == "needs_revision"
+    [pushback] = [m for m in ws.messages if m.type == "revision_request"]
+    assert pushback.content["max_price_inr"] == 15000 and pushback.content["source"] == "brand_reply"
+    assert ws.threads["b2"].status == "accepted" and ws.proposals["b2"].status == "accepted"
+    assert (ws.threads["b2"].history[-1]["type"], ws.threads["b2"].history[-1]["tier"]) == ("accepted", "Gold")
+    assert ws.threads["b3"].status == "declined" and ws.proposals["b3"].status == "declined"
+    [replacement] = [m for m in ws.messages if m.content.get("reason") == "replacement"]
+    assert replacement.content["brand_id"] == "b3"
+
+
+def test_a_nudged_thread_does_not_keep_the_run_waiting_forever():
+    """A follow-up that was already sent is not 'waiting for replies': otherwise a silent fixture brand
+    parked the run on awaiting_replies forever. Polling still reads nudged threads for a late reply."""
+    s = state(outreach={"b1": thread("b1", status="nudged")})
+    assert outreach.next_phase(outreach.Workspace(s)) == "outreach_idle"
+
+
 def gym_workspace(feedback: dict, messages=()) -> outreach.Workspace:
     brands = [brand(1, category="gym"), brand(2, category="gym"), brand(3, category="gym"), brand(4)]
     return outreach.Workspace(state(brands=brands, feedback=feedback, messages=list(messages)))

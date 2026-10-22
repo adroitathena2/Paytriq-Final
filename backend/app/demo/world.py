@@ -59,6 +59,7 @@ INBOX = {
     "apex-coaching": [(1, "Good proposal. We will go with Gold, please keep our stall near registration.")],
     "crumbs-bakery": [(1, "Happy to support the students. We will go with Bronze.")],
     "glow-salon": [(1, "Sounds fun! We will go with Bronze.")],
+    "page-turner": [(1, "Happy to help the fest. We will go with Silver.")],
     "campus-stationers": [(1, "Count us in - we will go with Silver.")],
 }
 
