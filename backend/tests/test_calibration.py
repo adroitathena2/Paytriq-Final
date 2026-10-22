@@ -23,9 +23,16 @@ def test_factor_uses_verified_deliverables_and_actual_footfall():
     assert roi_audit.calibration(state(), SPONSOR, [])["factor"] == 0.0
 
 
-def report(factor):
+def sponsor(factor, statuses=("verified", "verified"), brand_id="b1"):
+    """A report row as build_report writes it: one check per deliverable, plus the calibration proposal."""
+    checks = [check(d, s).model_dump() for d, s in zip(SPONSOR["deliverables"], statuses, strict=True)]
+    return {**SPONSOR, "brand_id": brand_id, "checks": checks,
+            "calibration": {"category": "cafe", "factor": factor}}
+
+
+def report(factor, *sponsors):
     return {"generated_at": "t", "disclosed_gaps": [], "published": False, "actual_footfall": 1000,
-            "sponsors": [{**SPONSOR, "calibration": {"category": "cafe", "factor": factor}}]}
+            "sponsors": list(sponsors) or [sponsor(factor)]}
 
 
 async def test_only_an_approved_report_calibrates(make_deps, db):
@@ -45,6 +52,37 @@ async def test_only_an_approved_report_calibrates(make_deps, db):
     await approval._roi({**s, "roi_report": report(0.7)}, deps, "approve", {})
     row = await db.get_calibration("user-1", "cafe")
     assert (round(row["factor"], 2), row["n_events"]) == (0.6, 2)  # running average
+
+
+async def test_unverified_evidence_never_calibrates(make_deps, db):
+    """Published with gaps: a sponsor with only ambiguous/missing checks says nothing about reach."""
+    db.runs["run-test"] = {"id": "run-test", "owner_id": "user-1"}
+    deps = make_deps(FakeLLM())
+    gaps = report(0.0, sponsor(0.0, ("ambiguous", "missing")))
+    gaps["disclosed_gaps"] = [{"brand_id": "b1", "deliverable": d, "status": "ambiguous"} for d in SPONSOR["deliverables"]]
+    s = state(phase="roi_review", roi_report=gaps, publish_with_gaps=True, pending_approval={"gate": "roi_publish"})
+
+    update = await approval._roi(s, deps, "approve", {})
+    assert update["roi_report"]["published_with_gaps"]  # publishing itself is not blocked
+    assert await db.get_calibration("user-1", "cafe") is None
+    [msg] = update["messages"]
+    assert (msg.from_agent, msg.to_agent, msg.type) == ("roi_audit", "proposal", "result")
+    assert msg.content == {"reason": "calibration_skipped", "category": "cafe", "unverified_deliverables": 2}
+    assert msg.reasoning == ("Not calibrating cafe: 2 deliverable(s) unverified; unverified evidence is not used "
+                             "to change future reach estimates.")
+
+
+async def test_only_fully_verified_sponsors_count_in_a_category(make_deps, db):
+    db.runs["run-test"] = {"id": "run-test", "owner_id": "user-1"}
+    deps = make_deps(FakeLLM())
+    mixed = report(None, sponsor(0.8), sponsor(0.1, ("verified", "ambiguous"), brand_id="b2"))
+    s = state(phase="roi_review", roi_report=mixed, pending_approval={"gate": "roi_publish"})
+
+    update = await approval._roi(s, deps, "approve", {})
+    row = await db.get_calibration("user-1", "cafe")
+    assert (row["factor"], row["n_events"]) == (0.8, 1)  # b2's partly verified 0.1 is left out
+    [msg] = update["messages"]
+    assert (msg.content["reason"], msg.content["event_factor"]) == ("calibration", 0.8)
 
 
 async def test_next_proposal_uses_calibration_and_says_so(make_deps, db):

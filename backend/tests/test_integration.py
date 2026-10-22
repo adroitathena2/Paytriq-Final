@@ -4,10 +4,11 @@ Three segments, as in the live demo:
 1. start -> discovery (self-replan, L1) -> shortlist gate -> proposals; the wholesaler is infeasible and
    goes back to Discovery (L7) -> outreach critique asks for revisions (L2) -> v2 -> send gate -> sent.
 2. poll replies -> pushback routed to Proposal (L3); a bounce and a decline routed to Discovery (L4), the
-   bounced brand was ranked first (A1), both are cafes (L6); an acceptance (deal memory, A2 has too few
+   bounced brand was ranked first (A1), both are cafes (L6); two acceptances (deal memory, A2 has too few
    deals) -> replacements -> send gate -> sent.
-3. evidence + audit -> ROI finds gaps and escalates (L5) -> A3 blocks publishing -> organizer publishes
-   with the gaps disclosed -> publish gate -> calibration saved (L8) -> done.
+3. evidence + audit -> ROI finds gaps (the bakery sent no proof) and escalates (L5) -> A3 blocks publishing ->
+   organizer publishes with the gaps disclosed -> publish gate -> calibration saved for the fully verified gym
+   (L8), skipped for the bakery -> done.
 
 The trace must contain every coordination loop and arbitration rule.
 """
@@ -46,7 +47,7 @@ def supervisor_policy(ctx):
             return {"next": agent, "reason": f"{agent} has {len(requests)} open request(s)"}
     if phase == "roi_review":
         return {"next": "human_approval", "gate": "roi_publish",
-                "reason": "1 of 3 deliverables verified; publish with the gaps disclosed rather than wait"}
+                "reason": "one deliverable has no proof; publish with the gaps disclosed rather than wait"}
     table = {"discovery": ("discovery", None), "shortlist_review": ("human_approval", "shortlist"),
              "proposals": ("proposal", None), "review": ("outreach", None),
              "send_review": ("human_approval", "send"), "sending": ("outreach", None)}
@@ -109,6 +110,7 @@ async def test_full_run_exercises_every_coordination_loop(make_deps, db, setting
     gmail.reply(threads["good-brew-cafe"], "Too expensive for our budget right now.")
     gmail.reply(threads["good-grind-cafe"], "Thanks, but not interested.")
     gmail.reply(threads["good-fit-gym"], "We will go with Gold, see you there!")
+    gmail.reply(threads[l7_replacement], "We will go with Bronze, count us in.")
     poll = new_message("human", "outreach", "request", {"action": "poll_replies"}, "check replies")
     await runner.trigger(rid, {"phase": "replies", "messages": [poll]}, "poll_replies")
     assert (await db.get_run(rid))["pending_gate"] == "send"
@@ -124,10 +126,12 @@ async def test_full_run_exercises_every_coordination_loop(make_deps, db, setting
     assert v["outreach"]["good-brew-cafe"]["thread_id"] == threads["good-brew-cafe"]  # v2 sent in the same thread
     assert v["outreach"][replacement]["status"] == "sent"
 
-    # Segment 3: ROI -------------------------------------------------------------------------------
-    await deps.storage.upload("evidence", f"{rid}/banner.jpg", b"\xff\xd8x", "image/jpeg")
-    evidence = [{"id": "ev1", "brand_id": "good-fit-gym", "kind": "photo", "storage_path": f"{rid}/banner.jpg",
-                 "mime_type": "image/jpeg", "note": "clear: Logo on main stage banner"}]
+    # Segment 3: ROI: the gym proves every deliverable, the bakery uploads nothing ------------------
+    gym = v["proposals"]["good-fit-gym"]
+    promised = next(t for t in gym["tiers"] if t["name"] == "Gold")["deliverables"]
+    await deps.storage.upload("evidence", f"{rid}/photo.jpg", b"\xff\xd8x", "image/jpeg")
+    evidence = [{"id": f"ev{i}", "brand_id": "good-fit-gym", "kind": "photo", "storage_path": f"{rid}/photo.jpg",
+                 "mime_type": "image/jpeg", "note": f"clear: {d}"} for i, d in enumerate(promised)]
     audit = new_message("human", "roi_audit", "request", {"action": "audit"}, "event is over")
     await runner.trigger(rid, {"phase": "roi", "messages": [audit], "evidence": evidence}, "audit")
     run_row = await db.get_run(rid)  # A3: gaps block publishing; no gate is offered
@@ -140,7 +144,8 @@ async def test_full_run_exercises_every_coordination_loop(make_deps, db, setting
     run_row = await db.get_run(rid)
     assert (run_row["status"], run_row["phase"]) == ("completed", "done")
     report = (await values())["roi_report"]
-    assert report["published"] and report["published_with_gaps"] and len(report["disclosed_gaps"]) == 2
+    assert report["published"] and report["published_with_gaps"]
+    assert {g["brand_id"] for g in report["disclosed_gaps"]} == {l7_replacement}  # the gym proved everything
 
     # The trace shows every coordination loop (L1-L8) and arbitration, by the same checks as
     # backend/scripts/verify_trace.py applies to a real exported trace ---------------------------------
@@ -149,7 +154,10 @@ async def test_full_run_exercises_every_coordination_loop(make_deps, db, setting
     found = verify_trace.matches(trace)
     assert found["L6"][0]["payload"]["content"]["category"] == "cafe"  # a bounce and a decline, both cafes
     assert found["L7"][0]["payload"]["content"]["brand_id"] == "good-wholesale-mart"
-    assert found["L8"][0]["payload"]["content"]["category"] == "gym"
+    assert [m["payload"]["content"]["category"] for m in found["L8"]] == ["gym"]  # only the fully verified sponsor
+    skipped = [t["payload"]["content"] for t in trace if t["event_type"] == "message"
+               and t["payload"]["content"].get("reason") == "calibration_skipped"]
+    assert skipped == [{"reason": "calibration_skipped", "category": "bakery", "unverified_deliverables": 1}]
     assert found["A1"] and found["A2"] and found["A3"]
     msgs = [t["payload"] for t in trace if t["event_type"] == "message"]
     decisions = [m for m in msgs if m["from_agent"] == "supervisor" and m["type"] == "decision"]

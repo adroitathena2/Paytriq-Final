@@ -36,7 +36,7 @@ Organizer creates event
 After the event: organizer uploads photos and links (and optionally the actual footfall)
   -> ROI Audit verifies each deliverable with Gemini Vision; missing evidence -> escalation       [L5]
   -> Supervisor: missing proof blocks publishing until new evidence or "publish with gaps"        [A3]
-  -> Publish gate -> approved report calibrates future reach estimates                           [L8]
+  -> Publish gate -> approved report calibrates future reach estimates (verified sponsors only)   [L8]
 ```
 
 Every agent runs its own tool-calling loop: Gemini picks the next tool, observes the result and adapts, for up to

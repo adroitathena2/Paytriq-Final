@@ -136,7 +136,7 @@ demo script uses).
 | L5 missing evidence → escalation | 1× | msg `1c2bb9d5d281`, trace#1592: ROI Audit asked for specific evidence for 15 deliverables |
 | L6 category feedback | 1× | msg `a6b3d775378d`, trace#1456: two gyms declined, Clef p_yes 0.90 → gyms ×0.6, Page Turner Books picked |
 | L7 infeasible → Discovery | — did not fire (Metro Wholesale was not shortlisted; every proposed brand passed the feasibility check, two after a Clef-unsure escalation where the rule kept them) | — |
-| L8 reach calibration | 4× | msg `c5825ed1f38f`, trace#1608: factor saved per category (coaching, cafe, bakery, salon) on publish |
+| L8 reach calibration | 4× | msg `c5825ed1f38f`, trace#1608: factor saved per category (coaching, cafe, bakery, salon) on publish; x0.00 from unverified evidence, which a later fix prevents (`docs/design.md` section 9) |
 | A1 bounce beats ranking | 1× | trace#1341: Chai Junction (fit 0.95) bounced → marked unreachable |
 | A2 price vs past deals | 8× | trace#1262: Apex capped Rs 50,000 → Rs 12,500 (1.25 × Rs 10,000 median) |
 | A3 ROI gaps block publishing | 2× | trace#1594 block, trace#1601 released only via explicit publish-with-gaps + approval |

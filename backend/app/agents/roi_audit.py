@@ -15,7 +15,9 @@ Honesty rules enforced in code after the loop:
 L8 calibration: for each sponsor the report also carries a reach factor = reach of the *verified*
 deliverables at the actual footfall (if the organizer gave one) / the reach the proposal estimated. It is
 only a proposal inside the report; it is saved for the Proposal agent (per organizer and category) when the
-organizer approves publishing, so an unapproved report never calibrates anything.
+organizer approves publishing, so an unapproved report never calibrates anything. Only sponsors whose
+deliverables were ALL verified count: "not verified" is not "delivered nothing", so a sponsor with missing or
+ambiguous evidence says nothing reliable about reach, and a category without such a sponsor is skipped.
 """
 
 from __future__ import annotations
@@ -145,14 +147,30 @@ def build_report(state: EventState, ws: Workspace) -> dict:
     }
 
 
+def unverified_count(sponsor: dict) -> int:
+    """Deliverables of a report sponsor that the audit did not verify (no checks at all: none verified)."""
+    checks = sponsor.get("checks") or []
+    if not checks:
+        return max(len(sponsor.get("deliverables") or []), 1)
+    return sum(c.get("status") != "verified" for c in checks)
+
+
 async def commit_calibration(deps, report: dict) -> list:
     """L8, called when the organizer approves publishing: save one factor per category (running average)
-    and tell the Proposal agent. Failures are traced but never block publishing."""
+    and tell the Proposal agent. Only fully verified sponsors count; a category with none is skipped and
+    Proposal is told why. Failures are traced but never block publishing."""
     by_category: dict[str, list[float]] = {}
+    unverified: dict[str, int] = {}
     for sponsor in report.get("sponsors", []):
         cal = sponsor.get("calibration") or {}
-        if cal.get("category") and cal.get("factor") is not None:
-            by_category.setdefault(cal["category"], []).append(cal["factor"])
+        category = cal.get("category")
+        if not category or cal.get("factor") is None:
+            continue
+        gaps = unverified_count(sponsor)
+        if gaps:
+            unverified[category] = unverified.get(category, 0) + gaps
+        else:
+            by_category.setdefault(category, []).append(cal["factor"])
     messages = []
     try:
         owner = await deps.owner_id()
@@ -167,6 +185,13 @@ async def commit_calibration(deps, report: dict) -> list:
                 "actual_footfall": report.get("actual_footfall")},
                 f"Approved report: {category} sponsors got {factor:.0%} of the estimated reach from verified "
                 f"deliverables; future {category} estimates use x{row['factor']:.2f} ({row['n_events']} event(s))."))
+        for category, count in unverified.items():
+            if category in by_category:
+                continue
+            messages.append(await emit(deps, AGENT, "proposal", "result", {
+                "reason": "calibration_skipped", "category": category, "unverified_deliverables": count},
+                f"Not calibrating {category}: {count} deliverable(s) unverified; unverified evidence is not used "
+                "to change future reach estimates."))
     except Exception as exc:
         await deps.log(AGENT, "tool_error", {"tool": "db.save_calibration", "error": str(exc)})
     return messages

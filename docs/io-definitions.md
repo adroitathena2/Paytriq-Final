@@ -133,7 +133,8 @@ brand_name, kind (initial, revised, nudge), subject, body, version, pdf_url}]}`;
 
 `calibration.factor` = reach of the verified deliverables at `footfall_used` (the actual footfall if given, else the
 expected one) / the estimated reach. It is only saved to `reach_calibration` (running average per organizer and
-category) when the organizer approves publishing; `published_with_gaps` records whether gaps were disclosed (A3).
+category) when the organizer approves publishing, and only from sponsors whose checks are all `verified`; a category
+with no such sponsor is skipped. `published_with_gaps` records whether gaps were disclosed (A3).
 
 ### 3. Execution trace (`GET /runs/{run_id}/trace`, `/trace/export`)
 
@@ -174,7 +175,7 @@ How each coordination loop and arbitration rule appears in `messages` and in the
 | L6 | `outreach -> discovery` `request`, `content.reason = "category_feedback"`, `content.category`, `content.evidence`, `content.p_yes`, `content.decided_by`; preceded by an `outreach` `decision` with `kind = "clef_judgement"` |
 | L7 | `proposal -> discovery` `request`, `content.reason = "infeasible"`, `content.why` (plus `p_yes`, `decided_by` for a brand-fit rejection); preceded by a `proposal` `decision` with `kind = "clef_judgement"` |
 | Clef unsure | `proposal` or `outreach -> human` `escalation`, `content.reason = "clef_unsure"` |
-| L8 | `roi_audit -> proposal` `result`, `content.reason = "calibration"`, `{category, event_factor, factor, n_events}` |
+| L8 | `roi_audit -> proposal` `result`, `content.reason = "calibration"`, `{category, event_factor, factor, n_events}`; for a category with no fully verified sponsor, `content.reason = "calibration_skipped"`, `{category, unverified_deliverables}` |
 | A1-A3 | trace event `decision` with `payload.kind = "arbitration"` and `payload.rule`; A2 also posts a `supervisor -> proposal` `revision_request` with `content.source = "arbitration"`; A3 posts a `supervisor -> human` `escalation` with `content.reason = "missing_proof"` |
 | Revision cap | `supervisor -> human` `escalation`, `content.reason = "revision_cap"` |
 
